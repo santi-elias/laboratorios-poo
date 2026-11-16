@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Agenda de Contactos - Spring Boot y MySQL</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a2e;
+            color: #e0e0e0;
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .contenedor {
+            width: 90%;
+            max-width: 950px;
+            background: #16213e;
+            padding: 35px 40px;
+            border-radius: 12px;
+            border: 1px solid #4a90d9;
+            box-shadow: 0 4px 25px rgba(0, 0, 0, 0.4);
+        }
+        .encabezado {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #4a90d9;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        h1 {
+            color: #f0c040;
+            margin: 0;
+            font-size: 2.2em;
+        }
+        a.btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #4a90d9;
+            color: white;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background 0.2s, transform 0.1s;
+        }
+        a.btn:hover {
+            background: #357abd;
+            transform: translateY(-1px);
+        }
+        .info-bar {
+            color: #aaa;
+            font-size: 0.95em;
+            margin-bottom: 18px;
+        }
+        .contador {
+            color: #f0c040;
+            font-weight: bold;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            background: #0f3460;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 14px 16px;
+            text-align: left;
+        }
+        th {
+            background: #1f4068;
+            color: #f0c040;
+            font-size: 0.95em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #4a90d9;
+        }
+        td {
+            border-bottom: 1px solid #16213e;
+        }
+        tr:hover {
+            background: rgba(74, 144, 217, 0.12);
+        }
+        .acciones-col {
+            text-align: center;
+            white-space: nowrap;
+        }
+        a.editar {
+            display: inline-block;
+            padding: 6px 12px;
+            background: #27ae60;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 0.85em;
+            font-weight: bold;
+            margin-right: 8px;
+            transition: background 0.2s;
+        }
+        a.editar:hover {
+            background: #219653;
+        }
+        a.eliminar {
+            display: inline-block;
+            padding: 6px 12px;
+            background: #e74c3c;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 0.85em;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        a.eliminar:hover {
+            background: #c0392b;
+        }
+        .vacio {
+            background: rgba(74, 144, 217, 0.15);
+            border: 1px dashed #4a90d9;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            margin-top: 20px;
+            color: #ccc;
+            font-size: 1.1em;
+            font-style: italic;
+        }
+        .db-status {
+            margin-top: 25px;
+            text-align: center;
+            font-size: 0.85em;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <div class="contenedor">
+        <div class="encabezado">
+            <h1>📋 Agenda de Contactos</h1>
+            <a class="btn" href="/nuevo">+ Nuevo contacto</a>
+        </div>
+
+        <div class="info-bar">
+            Total de registros: <span class="contador" th:text="${#lists.size(contactos)}">0</span> contactos persistidos en base de datos MySQL
+        </div>
+
+        <!-- Mensaje cuando la lista esté vacía (th:if) -->
+        <div th:if="${#lists.isEmpty(contactos)}" class="vacio">
+            No hay contactos aún. ¡Haz clic en "+ Nuevo contacto" para agregar el primero!
+        </div>
+
+        <!-- Tabla con contactos (th:unless) -->
+        <table th:unless="${#lists.isEmpty(contactos)}">
+            <thead>
+                <tr>
+                    <th style="width: 50px;">ID</th>
+                    <th>Nombre</th>
+                    <th>Apellido</th>
+                    <th>Email</th>
+                    <th>Teléfono</th>
+                    <th class="acciones-col" style="width: 170px;">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="c : ${contactos}">
+                    <td><strong th:text="${c.id}" style="color: #4a90d9;">1</strong></td>
+                    <td th:text="${c.nombre}">-</td>
+                    <td th:text="${c.apellido}">-</td>
+                    <td>
+                        <a th:href="'mailto:' + ${c.email}" th:text="${c.email}" style="color: #64b5f6; text-decoration: none;">-</a>
+                    </td>
+                    <td th:text="${c.telefono}">-</td>
+                    <td class="acciones-col">
+                        <a class="editar" th:href="@{/editar/{id}(id=${c.id})}">✏️ Editar</a>
+                        <a class="eliminar" th:href="@{/eliminar/{id}(id=${c.id})}" onclick="return confirm('¿Eliminar este contacto?')">🗑️ Eliminar</a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="db-status">
+            Conexión activa a: <code>MySQL Community Server (agenda @ localhost:3306)</code>
+        </div>
+    </div>
+</body>
+</html>
