@@ -1,0 +1,28 @@
+# Entornos virtuales de Python
+venv/
+.venv/
+env/
+__pycache__/
+*.pyc
+
+# Compilación y artefactos de Java / Maven
+target/
+**/target/
+*.class
+**/classes/
+.mvn/wrapper/maven-wrapper.jar
+
+# Configuración de IDEs
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+.project
+.classpath
+.settings/
+
+# Archivos de sistema y temporales
+.DS_Store
+Thumbs.db
+*.log

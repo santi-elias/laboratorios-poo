@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Ficha del Aventurero - Spring Boot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 80px;
+            background-color: #1a1a2e;
+            color: #e0e0e0;
+        }
+        h1 {
+            color: #f0c040;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+        .caja {
+            display: inline-block;
+            border: 2px solid #4a90d9;
+            border-radius: 12px;
+            padding: 30px 60px;
+            margin-top: 20px;
+            background-color: #16213e;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            text-align: left;
+            min-width: 320px;
+        }
+        .campo {
+            font-size: 1.3em;
+            margin: 15px 0;
+            color: #e0e0e0;
+        }
+        .etiqueta {
+            color: #4a90d9;
+            font-weight: bold;
+        }
+        .valor {
+            color: #f0c040;
+            font-weight: bold;
+        }
+        .enlace-box {
+            text-align: center;
+            margin-top: 25px;
+        }
+        .enlace {
+            color: #4a90d9;
+            text-decoration: none;
+            font-size: 1em;
+            font-weight: bold;
+        }
+        .enlace:hover {
+            color: #f0c040;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="caja">
+        <h1 style="text-align: center;">Ficha de Personaje</h1>
+        <div class="campo">
+            <span class="etiqueta">Aventurero: </span>
+            <span class="valor" th:text="${aventurero.nombre}">Sylva</span>
+        </div>
+        <div class="campo">
+            <span class="etiqueta">Clase: </span>
+            <span class="valor" th:text="${aventurero.clase}">Druida</span>
+        </div>
+        <div class="campo">
+            <span class="etiqueta">Nivel: </span>
+            <span class="valor" th:text="${aventurero.nivel}">10</span>
+        </div>
+        <div class="enlace-box">
+            <a href="/saludo" class="enlace">&larr; Volver al Saludo</a>
+        </div>
+    </div>
+</body>
+</html>

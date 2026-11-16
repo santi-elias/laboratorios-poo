@@ -1,0 +1,79 @@
+public class Druida extends Personaje implements Hechicero, Sanador {
+
+    private int mana;
+    private int poderCuracion;
+    private String formaAnimal;
+
+    public Druida(String nombre, int nivel, int puntosVida, int mana) {
+        this(nombre, nivel, puntosVida, mana, 50, "Oso");
+    }
+
+    public Druida(String nombre, int nivel, int puntosVida,
+                  int mana, int poderCuracion, String formaAnimal) {
+        super(nombre, nivel, puntosVida);
+        this.mana = mana;
+        this.poderCuracion = poderCuracion;
+        this.formaAnimal = formaAnimal;
+    }
+
+    @Override
+    public void atacar() throws RpgException {
+        if (!isEstaVivo()) {
+            throw new PersonajeDerrotadoException(getNombre());
+        }
+
+        if (mana < 10) {
+            throw new RecursoInsuficienteException("mana", mana);
+        }
+
+        mana -= 10;
+        System.out.println("[" + nombre + "] invoca raíces del bosque y ataca con furia natural.");
+    }
+
+    @Override
+    public int calcularDanio() {
+        int danioBase = nivel * 20;
+        int bonusMana = mana / 2;
+        int bonusForma = "Oso".equalsIgnoreCase(formaAnimal) ? 40 : 20;
+        return danioBase + bonusMana + bonusForma;
+    }
+
+    @Override
+    public void lanzarHechizo() {
+        System.out.println(nombre + " lanza: ¡Tormenta de espinas! (maná: " + mana + ")");
+    }
+
+    @Override
+    public int getMana() {
+        return mana;
+    }
+
+    @Override
+    public void curarAliado(Personaje aliado) throws RpgException {
+        if (aliado == null) {
+            throw new PersonajeNuloException("curarAliado");
+        }
+
+        if (!aliado.isEstaVivo()) {
+            throw new AccionInvalidaException("curarAliado", "No se puede curar a un personaje derrotado");
+        }
+
+        aliado.puntosVida += poderCuracion;
+        System.out.println(nombre + " toca la tierra y cura a " + aliado.getNombre() +
+                           " +" + poderCuracion + ". Vida: " + aliado.getPuntosVida());
+    }
+
+    @Override
+    public int getPoderCuracion() {
+        return poderCuracion;
+    }
+
+    public String getFormaAnimal() {
+        return formaAnimal;
+    }
+
+    @Override
+    public String toString() {
+        return super.toString() + " | Maná: " + mana + " | Forma Animal: " + formaAnimal;
+    }
+}

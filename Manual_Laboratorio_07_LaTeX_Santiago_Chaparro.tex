@@ -1,0 +1,737 @@
+\documentclass[11pt,letterpaper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[spanish,es-tabla]{babel}
+\usepackage[margin=2.5cm,headheight=14pt]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{lastpage}
+\usepackage{microtype}
+\usepackage{hyperref}
+
+% Paleta de colores sobria y académica
+\definecolor{uanlblue}{RGB}{16, 44, 87}
+\definecolor{uanlgold}{RGB}{180, 130, 20}
+\definecolor{codebg}{RGB}{248, 249, 250}
+\definecolor{codeframe}{RGB}{218, 224, 233}
+\definecolor{keywordcolor}{RGB}{0, 51, 153}
+\definecolor{stringcolor}{RGB}{163, 21, 21}
+\definecolor{commentcolor}{RGB}{0, 128, 0}
+\definecolor{termbg}{RGB}{30, 30, 30}
+\definecolor{termfg}{RGB}{220, 220, 220}
+
+% Configuración de hipervínculos
+\hypersetup{
+    colorlinks=true,
+    linkcolor=uanlblue,
+    citecolor=uanlblue,
+    urlcolor=uanlblue
+}
+
+% Encabezados y pies de página
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small \textsc{Programación Orientada a Objetos --- Lab 07}}
+\fancyhead[R]{\small \textit{Manejo de Excepciones en Java}}
+\fancyfoot[L]{\small Santiago Elias Chaparro (2225342)}
+\fancyfoot[R]{\small Página \thepage\ de \pageref{LastPage}}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+% Formato de títulos
+\titleformat{\section}
+  {\normalfont\Large\bfseries\color{uanlblue}}{\thesection.}{0.8em}{}[\titlerule]
+\titleformat{\subsection}
+  {\normalfont\large\bfseries\color{uanlblue}}{\thesubsection}{0.6em}{}
+
+% Configuración de Listings para Java
+\lstdefinestyle{JavaStyle}{
+    language=Java,
+    backgroundcolor=\color{codebg},
+    basicstyle=\ttfamily\footnotesize,
+    keywordstyle=\color{keywordcolor}\bfseries,
+    stringstyle=\color{stringcolor},
+    commentstyle=\color{commentcolor}\itshape,
+    frame=single,
+    rulecolor=\color{codeframe},
+    breaklines=true,
+    showstringspaces=false,
+    tabsize=4,
+    captionpos=b,
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    numbersep=7pt,
+    xleftmargin=12pt,
+    framexleftmargin=12pt
+}
+
+\lstdefinestyle{TerminalStyle}{
+    backgroundcolor=\color{termbg},
+    basicstyle=\ttfamily\footnotesize\color{termfg},
+    frame=single,
+    rulecolor=\color{black},
+    breaklines=true,
+    showstringspaces=false,
+    numbers=none,
+    xleftmargin=8pt,
+    framexleftmargin=8pt
+}
+
+\begin{document}
+
+% =========================================================================
+% PORTADA
+% =========================================================================
+\begin{titlepage}
+    \centering
+    \vspace*{0.5cm}
+    
+    {\Huge \textbf{UNIVERSIDAD AUTÓNOMA DE NUEVO LEÓN}}\\[0.4cm]
+    {\LARGE \textbf{FACULTAD DE CIENCIAS FÍSICO MATEMÁTICAS}}\\[2.5cm]
+    
+    {\large \textsc{Unidad de Aprendizaje:}}\\[0.2cm]
+    {\Large \textbf{PROGRAMACIÓN ORIENTADA A OBJETOS}}\\[0.3cm]
+    {\large \textit{Catedrático: Mtro. Jorge Alberto Pineda Islas}}\\[2.0cm]
+    
+    \rule{\linewidth}{0.6mm}\\[0.4cm]
+    {\huge \textbf{MANUAL DE PRÁCTICA DE LABORATORIO}}\\[0.3cm]
+    {\Large \textbf{Laboratorio 07: Manejo de Excepciones en Java}}\\[0.2cm]
+    {\large \textit{Arquitectura Robusta y Tolerante a Fallos en un Motor RPG}}\\[0.3cm]
+    \rule{\linewidth}{0.6mm}\\[2.2cm]
+    
+    \begin{minipage}{0.85\textwidth}
+        \begin{tabular}{ll}
+            \textbf{Estudiante:} & Santiago Elias Chaparro \\
+            \textbf{Matrícula:} & 2225342 \\
+            \textbf{Carrera:} & Licenciatura en Ciencias Computacionales \\
+            \textbf{Semestre:} & Tercer Semestre (Agosto -- Diciembre 2026) \\
+            \textbf{Fecha de Entrega:} & Noviembre 14 del 2026 \\
+        \end{tabular}
+    \end{minipage}
+    
+    \vfill
+    {\small San Nicolás de los Garza, Nuevo León, México}
+    \vspace*{0.5cm}
+\end{titlepage}
+
+% =========================================================================
+% ÍNDICE GENERAL
+% =========================================================================
+\tableofcontents
+\newpage
+
+% =========================================================================
+% 1. OBJETIVO
+% =========================================================================
+\section{Objetivo de la Práctica}
+
+El propósito primordial de esta práctica de laboratorio es dotar a la arquitectura del videojuego de rol (RPG) desarrollada en las sesiones anteriores de un mecanismo formal, estandarizado y robusto de gestión de errores en tiempo de ejecución. Específicamente, se busca alcanzar las siguientes competencias técnicas:
+
+\begin{itemize}
+    \item \textbf{Control de Flujo Excepcional:} Comprender y aplicar la sintaxis y semántica formal de las estructuras \texttt{try}, \texttt{catch} y \texttt{finally} para capturar contingencias operativas sin colapsar el hilo de ejecución principal.
+    \item \textbf{Modelado de Excepciones de Dominio:} Diseñar e implementar una jerarquía de clases de excepción personalizadas que representen con precisión semántica los estados anómalos de las reglas del juego.
+    \item \textbf{Diferenciación Taxonómica:} Distinguir con claridad teórica y práctica entre excepciones \textit{chequeadas} (\texttt{Checked Exceptions}, derivadas de \texttt{Exception}) y \textit{no chequeadas} (\texttt{Unchecked Exceptions}, derivadas de \texttt{RuntimeException}).
+    \item \textbf{Contratos y Propagación:} Emplear la palabra clave \texttt{throw} para detonar activamente excepciones y la cláusula \texttt{throws} en las firmas de los métodos para documentar formalmente la propagación de errores.
+    \item \textbf{Auditoría y Bitácora Transaccional:} Asegurar la ejecución incondicional del registro de turnos de combate mediante el bloque \texttt{finally}, garantizando la trazabilidad histórica de cada acción.
+\end{itemize}
+
+% =========================================================================
+% 2. INTRODUCCIÓN
+% =========================================================================
+\section{Introducción y Antecedentes}
+
+En los laboratorios precedentes (Labs 04, 05 y 06), se construyó de manera iterativa la base arquitectónica de un videojuego RPG:
+\begin{enumerate}
+    \item En el \textbf{Laboratorio 04}, se aplicó la herencia simple a partir de una clase base concreta (\texttt{Personaje}), permitiendo que subclases como \texttt{Guerrero} o \texttt{Arquero} reutilizaran atributos y métodos comunes.
+    \item En el \textbf{Laboratorio 05}, se introdujo el polimorfismo dinámico, sobreescribiendo el método \texttt{calcularDanio()} para que cada arquetipo infligiera daño con base en sus atributos particulares.
+    \item En el \textbf{Laboratorio 06}, se resolvió el defecto conceptual de permitir la existencia de ``personajes genéricos'' transformando a \texttt{Personaje} en una clase abstracta, y definiendo capacidades opcionales desacopladas mediante interfaces como \texttt{Hechicero} y \texttt{Sanador}.
+\end{enumerate}
+
+No obstante, la solución presentaba una vulnerabilidad crítica de diseño: \textbf{la ausencia de validaciones de estado}. Era factible ejecutar operaciones físicamente o lógicamente inválidas sin que el sistema opusiera resistencia alguna:
+\begin{lstlisting}[style=JavaStyle,numbers=none]
+guerrero.recibirDanio(-50); // Danio negativo: sumaba vida al personaje
+druida.curarAliado(null);   // Curar referencia nula: causaba NullPointerException
+arquero.atacar();           // Atacar con 0 flechas: flechasDisponibles pasaba a -1
+druida.curarAliado(muerto); // Curar a un combatiente derrotado
+\end{lstlisting}
+
+Hasta ahora, la respuesta común era imprimir un mensaje en consola mediante \texttt{System.out.println()} y continuar la ejecución. En software de grado de ingeniería esto resulta inadmisible, ya que las variables de estado quedan corrompidas. El lenguaje Java proporciona un subsistema formal de manejo de excepciones derivado de la clase \texttt{Throwable}, el cual permite aislar la lógica medular del programa de los protocolos de contingencia y recuperación.
+
+% =========================================================================
+% 3. EXPLICACIÓN DEL TEMA
+% =========================================================================
+\section{Explicación del Tema}
+
+\subsection{Jerarquía de Excepciones en Java}
+Todas las condiciones excepcionales en la plataforma Java son representadas por objetos que derivan de \texttt{java.lang.Throwable}. Esta clase raíz se divide inmediatamente en dos grandes ramas:
+\begin{itemize}
+    \item \textbf{\texttt{java.lang.Error}:} Denota condiciones catastróficas que escapan al control de la aplicación, típicamente fallos internos de la Máquina Virtual de Java (JVM), tales como \texttt{OutOfMemoryError} o \texttt{StackOverflowError}. El código del programador no debe intentar recuperarse de estas contingencias.
+    \item \textbf{\texttt{java.lang.Exception}:} Representa condiciones anómalas pero anticipables y recuperables de las que un software profesional debe sobreponerse con elegancia.
+\end{itemize}
+
+\subsection{Excepciones Chequeadas (Checked) vs. No Chequeadas (Unchecked)}
+La distinción arquitectónica más relevante en Java reside en cómo el compilador trata a las subclases de \texttt{Exception}:
+
+\begin{table}[h!]
+    \centering
+    \caption{Comparativa entre Excepciones Chequeadas y No Chequeadas}
+    \vspace{0.2cm}
+    \small
+    \begin{tabularx}{\textwidth}{p{3.2cm}X X}
+        \toprule
+        \textbf{Criterio} & \textbf{Excepción Chequeada (Checked)} & \textbf{Excepción No Chequeada (Unchecked)} \\
+        \midrule
+        \textbf{Herencia directa} & \texttt{java.lang.Exception} & \texttt{java.lang.RuntimeException} \\
+        \textbf{Momento de control} & Exigida en \textit{tiempo de compilación}. & Evaluada en \textit{tiempo de ejecución}. \\
+        \textbf{Sintaxis obligatoria} & Obliga a usar bloque \texttt{try-catch} o declarar \texttt{throws} en la firma del método. & No exige ni captura ni declaración explícita de propagación. \\
+        \textbf{Naturaleza semántica} & Contingencias de negocio o del entorno recuperables (recursos agotados, fallas de red/disco). & Defectos de programación o errores lógicos atribuibles al desarrollador (bugs). \\
+        \textbf{Ejemplos en el RPG} & \texttt{RpgException}, \texttt{PersonajeDerrotadoException}, \texttt{RecursoInsuficienteException}. & \texttt{PersonajeNuloException}. \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+\subsection{Mecánica de Control: throw, throws, try, catch y finally}
+El manejo estructurado se articula a través de cinco palabras clave:
+\begin{enumerate}
+    \item \textbf{\texttt{throw}:} Sentencia imperativa que interrumpe el flujo normal e instancia y dispara un objeto de excepción en el momento en que se detecta una violación a las reglas (ejemplo: \texttt{throw new AccionInvalidaException(...)}).
+    \item \textbf{\texttt{throws}:} Cláusula informativa en la cabecera de un método que notifica al compilador y a los llamadores qué excepciones chequeadas pueden emanar de su interior (ejemplo: \texttt{public void atacar() throws RpgException}).
+    \item \textbf{\texttt{try}:} Delimita el bloque de instrucciones vigilado donde pueden surgir errores.
+    \item \textbf{\texttt{catch}:} Bloques de captura que interceptan selectivamente las excepciones. En Java, \textbf{el orden de los \texttt{catch} debe ir de la clase más específica a la más general}. Si se coloca la superclase primero, el compilador emitirá un error por código inalcanzable.
+    \item \textbf{\texttt{finally}:} Bloque de ejecución mandatoria e incondicional. Se ejecuta siempre, haya ocurrido un error o no, e incluso si se ejecutó un \texttt{return}. Es indispensable para liberar descriptores de archivos, cerrar conexiones y auditar operaciones en bitácoras.
+\end{enumerate}
+
+% =========================================================================
+% 4. ARQUITECTURA DEL SISTEMA
+% =========================================================================
+\section{Arquitectura y Jerarquía de Clases}
+
+\subsection{Taxonomía de Excepciones del RPG}
+El diseño propuesto extiende la jerarquía de Java de forma limpia y cohesiva:
+
+\begin{lstlisting}[style=TerminalStyle]
+java.lang.Throwable
+  +-- java.lang.Error (anomalias criticas de la JVM)
+  +-- java.lang.Exception
+        +-- RpgException [CHECKED] (Excepcion raiz del videojuego)
+        |     +-- PersonajeDerrotadoException (vida <= 0 al actuar)
+        |     +-- RecursoInsuficienteException (mana o flechas agotadas)
+        |     \-- AccionInvalidaException (dano negativo, curar derrotados)
+        |
+        \-- java.lang.RuntimeException
+              \-- PersonajeNuloException [UNCHECKED] (referencia null)
+\end{lstlisting}
+
+\subsection{Diseño del Motor de Combate Transaccional}
+El componente \texttt{MotorCombate} coordina los enfrentamientos aplicando el principio de inversión de responsabilidades: los personajes detonan los fallos en sus validaciones internas, mientras que el motor centraliza la captura, el registro en bitácora y la continuidad del juego.
+
+% =========================================================================
+% 5. CÓDIGO FUENTE
+% =========================================================================
+\section{Código Fuente del Sistema}
+
+A continuación se presenta la totalidad de las 13 clases e interfaces organizadas por módulos funcionales.
+
+\subsection{Jerarquía de Excepciones Personalizadas}
+
+\textbf{1. Excepción Raíz del Juego:} \texttt{RpgException.java}
+\begin{lstlisting}[style=JavaStyle]
+public class RpgException extends Exception {
+    public RpgException(String mensaje) {
+        super(mensaje);
+    }
+    public RpgException(String mensaje, Throwable causa) {
+        super(mensaje, causa);
+    }
+}
+\end{lstlisting}
+
+\textbf{2. Acción con Combatiente Caído:} \texttt{PersonajeDerrotadoException.java}
+\begin{lstlisting}[style=JavaStyle]
+public class PersonajeDerrotadoException extends RpgException {
+    private String nombrePersonaje;
+
+    public PersonajeDerrotadoException(String nombrePersonaje) {
+        super("El personaje '" + nombrePersonaje + "' esta derrotado y no puede realizar esta accion.");
+        this.nombrePersonaje = nombrePersonaje;
+    }
+
+    public String getNombrePersonaje() {
+        return nombrePersonaje;
+    }
+}
+\end{lstlisting}
+
+\textbf{3. Agotamiento de Recursos:} \texttt{RecursoInsuficienteException.java}
+\begin{lstlisting}[style=JavaStyle]
+public class RecursoInsuficienteException extends RpgException {
+    public RecursoInsuficienteException(String recurso, int disponible) {
+        super("Recurso insuficiente: " + recurso + ". Disponible: " + disponible);
+    }
+}
+\end{lstlisting}
+
+\textbf{4. Operaciones Ilícitas de Estado:} \texttt{AccionInvalidaException.java}
+\begin{lstlisting}[style=JavaStyle]
+public class AccionInvalidaException extends RpgException {
+    public AccionInvalidaException(String accion, String razon) {
+        super("Accion invalida '" + accion + "': " + razon);
+    }
+}
+\end{lstlisting}
+
+\textbf{5. Excepción No Chequeada por Referencia Nula:} \texttt{PersonajeNuloException.java}
+\begin{lstlisting}[style=JavaStyle]
+public class PersonajeNuloException extends RuntimeException {
+    public PersonajeNuloException(String metodo) {
+        super("Se paso un personaje nulo al metodo '" + metodo + "'. Esto es un error de programacion.");
+    }
+}
+\end{lstlisting}
+
+\subsection{Interfaces y Clase Abstracta Base}
+
+\textbf{6. Interfaz Mágica:} \texttt{Hechicero.java}
+\begin{lstlisting}[style=JavaStyle]
+public interface Hechicero {
+    void lanzarHechizo();
+    int getMana();
+}
+\end{lstlisting}
+
+\textbf{7. Interfaz Curativa:} \texttt{Sanador.java}
+\begin{lstlisting}[style=JavaStyle]
+public interface Sanador {
+    void curarAliado(Personaje aliado) throws RpgException;
+    int getPoderCuracion();
+}
+\end{lstlisting}
+
+\textbf{8. Clase Abstracta Base con Validaciones:} \texttt{Personaje.java}
+\begin{lstlisting}[style=JavaStyle]
+public abstract class Personaje {
+    protected String nombre;
+    protected int nivel;
+    protected int puntosVida;
+    protected boolean estaVivo;
+
+    public Personaje(String nombre, int nivel, int puntosVida) {
+        this.nombre = nombre;
+        this.nivel = nivel;
+        this.puntosVida = puntosVida;
+        this.estaVivo = true;
+    }
+
+    public String getNombre()    { return nombre; }
+    public int getNivel()        { return nivel; }
+    public int getPuntosVida()   { return puntosVida; }
+    public boolean isEstaVivo()  { return estaVivo; }
+
+    public void recibirDanio(int danio) throws AccionInvalidaException {
+        if (danio < 0) {
+            throw new AccionInvalidaException("recibirDanio", "El danio no puede ser negativo: " + danio);
+        }
+        puntosVida -= danio;
+        if (puntosVida <= 0) {
+            puntosVida = 0;
+            estaVivo = false;
+        }
+        System.out.println(nombre + " recibe " + danio + " de danio. Vida: " + puntosVida);
+        if (!estaVivo) {
+            System.out.println(nombre + " ha sido derrotado.");
+        }
+    }
+
+    public abstract void atacar() throws RpgException;
+    public abstract int calcularDanio();
+
+    @Override
+    public String toString() {
+        String vivo = estaVivo ? "Si" : "No";
+        return "Nombre: " + nombre + " | Nivel: " + nivel + " | Vida: " + puntosVida + " | Vivo: " + vivo;
+    }
+}
+\end{lstlisting}
+
+\subsection{Clases Concretas de Personajes}
+
+\textbf{9. Arquetipo a Distancia con Munición:} \texttt{Arquero.java}
+\begin{lstlisting}[style=JavaStyle]
+public class Arquero extends Personaje {
+    private String tipoArco;
+    private int flechasDisponibles;
+    private int precision;
+
+    public Arquero(String nombre, int nivel, int puntosVida,
+                   String tipoArco, int flechasDisponibles, int precision) {
+        super(nombre, nivel, puntosVida);
+        this.tipoArco = tipoArco;
+        this.flechasDisponibles = flechasDisponibles;
+        this.precision = precision;
+    }
+
+    @Override
+    public void atacar() throws RpgException {
+        if (!isEstaVivo()) {
+            throw new PersonajeDerrotadoException(getNombre());
+        }
+        if (flechasDisponibles <= 0) {
+            throw new RecursoInsuficienteException("flechas", flechasDisponibles);
+        }
+        flechasDisponibles--;
+        System.out.println("[" + getNombre() + "] dispara una flecha. Flechas restantes: " + flechasDisponibles);
+    }
+
+    @Override
+    public int calcularDanio() {
+        return (precision * nivel) / 2;
+    }
+
+    public String getTipoArco() { return tipoArco; }
+    public int getFlechasDisponibles() { return flechasDisponibles; }
+    public int getPrecision() { return precision; }
+}
+\end{lstlisting}
+
+\textbf{10. Arquetipo Híbrido (Mágico y Curativo):} \texttt{Druida.java}
+\begin{lstlisting}[style=JavaStyle]
+public class Druida extends Personaje implements Hechicero, Sanador {
+    private int mana;
+    private int poderCuracion;
+    private String formaAnimal;
+
+    public Druida(String nombre, int nivel, int puntosVida,
+                  int mana, int poderCuracion, String formaAnimal) {
+        super(nombre, nivel, puntosVida);
+        this.mana = mana;
+        this.poderCuracion = poderCuracion;
+        this.formaAnimal = formaAnimal;
+    }
+
+    @Override
+    public void atacar() throws RpgException {
+        if (!isEstaVivo()) {
+            throw new PersonajeDerrotadoException(getNombre());
+        }
+        if (mana < 10) {
+            throw new RecursoInsuficienteException("mana", mana);
+        }
+        mana -= 10;
+        System.out.println("[" + nombre + "] invoca raices del bosque y ataca con furia natural.");
+    }
+
+    @Override
+    public int calcularDanio() {
+        int danioBase = nivel * 20;
+        int bonusMana = mana / 2;
+        int bonusForma = "Oso".equalsIgnoreCase(formaAnimal) ? 40 : 20;
+        return danioBase + bonusMana + bonusForma;
+    }
+
+    @Override
+    public void lanzarHechizo() {
+        System.out.println(nombre + " lanza: ¡Tormenta de espinas! (mana: " + mana + ")");
+    }
+
+    @Override
+    public int getMana() { return mana; }
+
+    @Override
+    public void curarAliado(Personaje aliado) throws RpgException {
+        if (aliado == null) {
+            throw new PersonajeNuloException("curarAliado");
+        }
+        if (!aliado.isEstaVivo()) {
+            throw new AccionInvalidaException("curarAliado", "No se puede curar a un personaje derrotado");
+        }
+        aliado.puntosVida += poderCuracion;
+        System.out.println(nombre + " toca la tierra y cura a " + aliado.getNombre() +
+                           " +" + poderCuracion + ". Vida: " + aliado.getPuntosVida());
+    }
+
+    @Override
+    public int getPoderCuracion() { return poderCuracion; }
+    public String getFormaAnimal() { return formaAnimal; }
+}
+\end{lstlisting}
+
+\textbf{11. Arquetipo Oscuro:} \texttt{Nigromante.java}
+\begin{lstlisting}[style=JavaStyle]
+public class Nigromante extends Personaje implements Hechicero {
+    private int mana;
+    private int almasAbsorbidas;
+
+    public Nigromante(String nombre, int nivel, int puntosVida,
+                      int mana, int almasAbsorbidas) {
+        super(nombre, nivel, puntosVida);
+        this.mana = mana;
+        this.almasAbsorbidas = almasAbsorbidas;
+    }
+
+    @Override
+    public void atacar() throws RpgException {
+        if (!isEstaVivo()) {
+            throw new PersonajeDerrotadoException(getNombre());
+        }
+        if (mana < 15) {
+            throw new RecursoInsuficienteException("mana", mana);
+        }
+        mana -= 15;
+        System.out.println("[" + nombre + "] drena la esencia vital e invoca sombras.");
+    }
+
+    @Override
+    public int calcularDanio() {
+        int danioBase = nivel * 25;
+        int bonusMana = mana / 2;
+        int bonusAlmas = almasAbsorbidas * 15;
+        return danioBase + bonusMana + bonusAlmas;
+    }
+
+    @Override
+    public void lanzarHechizo() {
+        System.out.println(nombre + " lanza: ¡Maldicion de decadencia! (mana: " + mana + ")");
+    }
+
+    @Override
+    public int getMana() { return mana; }
+    public int getAlmasAbsorbidas() { return almasAbsorbidas; }
+}
+\end{lstlisting}
+
+\subsection{Motor de Combate y Clase Principal}
+
+\textbf{12. Motor con Bloque try-catch-finally Jerárquico:} \texttt{MotorCombate.java}
+\begin{lstlisting}[style=JavaStyle]
+import java.util.ArrayList;
+
+public class MotorCombate {
+    private ArrayList<String> bitacora;
+
+    public MotorCombate() {
+        bitacora = new ArrayList<>();
+    }
+
+    public void ejecutarTurno(Personaje atacante, Personaje defensor) {
+        if (atacante == null) throw new PersonajeNuloException("ejecutarTurno(atacante)");
+        if (defensor == null) throw new PersonajeNuloException("ejecutarTurno(defensor)");
+
+        System.out.println("\n--- Turno: " + atacante.getNombre() + " vs " + defensor.getNombre() + " ---");
+        try {
+            atacante.atacar();
+            int danio = atacante.calcularDanio();
+            defensor.recibirDanio(danio);
+            bitacora.add(String.format("%-12s | %s ataco a %s (danio: %d)",
+                         "OK", atacante.getNombre(), defensor.getNombre(), danio));
+
+        } catch (PersonajeDerrotadoException e) {
+            bitacora.add(String.format("%-12s | %s no pudo actuar",
+                         "DERROTA", e.getNombrePersonaje()));
+            System.out.println("ADVERTENCIA: " + e.getMessage());
+
+        } catch (RecursoInsuficienteException e) {
+            bitacora.add(String.format("%-12s | %s no pudo atacar",
+                         "SIN RECURSO", atacante.getNombre()));
+            System.out.println("ADVERTENCIA: " + e.getMessage());
+
+        } catch (RpgException e) {
+            bitacora.add(String.format("%-12s | %s", "ERROR RPG", e.getMessage()));
+            System.out.println("ADVERTENCIA Error de juego: " + e.getMessage());
+
+        } finally {
+            // Se ejecuta de forma mandatoria haya o no excepcion
+            System.out.println("[Bitacora] Turno registrado.");
+        }
+    }
+
+    public void mostrarBitacora() {
+        System.out.println("\n=== Bitacora de Combate ===");
+        for (int i = 0; i < bitacora.size(); i++) {
+            System.out.println((i + 1) + ". " + bitacora.get(i));
+        }
+    }
+}
+\end{lstlisting}
+
+\textbf{13. Clase Principal con los 6 Escenarios de Validación:} \texttt{Main.java}
+\begin{lstlisting}[style=JavaStyle]
+public class Main {
+    public static void main(String[] args) {
+        System.out.println("=== RPG --- Sistema con Manejo de Excepciones ===");
+
+        Druida druida = new Druida("Sylva", 7, 200, 180, 120, "Oso");
+        Nigromante nigromante = new Nigromante("Malachar", 6, 240, 220, 5);
+        MotorCombate motor = new MotorCombate();
+
+        // Escenario 1 -- Turno normal sin excepcion
+        motor.ejecutarTurno(druida, nigromante);
+
+        // Escenario 2 -- Personaje derrotado intenta atacar
+        try {
+            druida.recibirDanio(9999);
+        } catch (AccionInvalidaException e) {
+            System.out.println("Error al aplicar danio: " + e.getMessage());
+        }
+        motor.ejecutarTurno(druida, nigromante);
+
+        // Escenario 3 -- Arquero sin flechas
+        Arquero sinFlechas = new Arquero("Legolas", 6, 150, "Arco Largo", 0, 95);
+        motor.ejecutarTurno(sinFlechas, nigromante);
+
+        // Escenario 4 -- Curar aliado derrotado
+        System.out.println("\n-- Intento de curar aliado derrotado --");
+        Druida druida2 = new Druida("Eldrin", 5, 180, 100, 80, "Lobo");
+        try {
+            druida2.curarAliado(druida);
+        } catch (RpgException e) {
+            System.out.println("No se pudo curar: " + e.getMessage());
+        }
+
+        // Escenario 5 -- Danio negativo con finally
+        System.out.println("\n-- Bloque manual try-catch-finally --");
+        try {
+            nigromante.recibirDanio(-50);
+        } catch (AccionInvalidaException e) {
+            System.out.println("Capturado: " + e.getMessage());
+        } finally {
+            System.out.println("El bloque finally siempre se ejecuta.");
+        }
+
+        // Escenario 6 -- Mostrar bitacora completa
+        motor.mostrarBitacora();
+    }
+}
+\end{lstlisting}
+
+% =========================================================================
+% 6. SCREENSHOTS Y OUTPUTS DE EJECUCIÓN
+% =========================================================================
+\section{Outputs de la Ejecución}
+
+A continuación se presenta la salida real de consola obtenida al compilar y ejecutar el proyecto con OpenJDK 25 (\texttt{javac --release 25 *.java \&\& java Main}):
+
+\begin{lstlisting}[style=TerminalStyle]
+=== RPG --- Sistema con Manejo de Excepciones ===
+
+--- Turno: Sylva vs Malachar ---
+[Sylva] invoca raices del bosque y ataca con furia natural.
+Malachar recibe 265 de danio. Vida: 0
+Malachar ha sido derrotado.
+[Bitacora] Turno registrado.
+Sylva recibe 9999 de danio. Vida: 0
+Sylva ha sido derrotado.
+
+--- Turno: Sylva vs Malachar ---
+ADVERTENCIA: El personaje 'Sylva' esta derrotado y no puede realizar esta accion.
+[Bitacora] Turno registrado.
+
+--- Turno: Legolas vs Malachar ---
+ADVERTENCIA: Recurso insuficiente: flechas. Disponible: 0
+[Bitacora] Turno registrado.
+
+-- Intento de curar aliado derrotado --
+No se pudo curar: Accion invalida 'curarAliado': No se puede curar a un personaje derrotado
+
+-- Bloque manual try-catch-finally --
+Capturado: Accion invalida 'recibirDanio': El danio no puede ser negativo: -50
+El bloque finally siempre se ejecuta.
+
+=== Bitacora de Combate ===
+1. OK           | Sylva ataco a Malachar (danio: 265)
+2. DERROTA      | Sylva no pudo actuar
+3. SIN RECURSO  | Legolas no pudo atacar
+\end{lstlisting}
+
+\subsection{Verificación de los Criterios de Evaluación}
+\begin{enumerate}
+    \item \textbf{Escenario 1 (Turno Normal):} El ataque de Sylva calculó 265 puntos de daño, consumió 10 puntos de maná del atacante y abatió a Malachar registrándose con estado \texttt{OK} en la bitácora.
+    \item \textbf{Escenario 2 (Personaje Derrotado):} Al reducir los puntos de vida de Sylva a cero, su intento de ataque subsiguiente fue interceptado como \texttt{PersonajeDerrotadoException}, previniendo ataques de entidades sin vida.
+    \item \textbf{Escenario 3 (Recurso Insuficiente):} Legolas intentó atacar con 0 flechas; el sistema lanzó \texttt{RecursoInsuficienteException}, evitando que el contador de proyectiles cayera a valores negativos.
+    \item \textbf{Escenario 4 (Curación Inválida):} Eldrin intentó curar a Sylva ya caída; la validación disparó \texttt{AccionInvalidaException}, haciendo cumplir las reglas de no revivir automáticamente por medio de curaciones simples.
+    \item \textbf{Escenario 5 (Daño Negativo y Garantía de \texttt{finally}):} La invocación de \texttt{recibirDanio(-50)} detonó \texttt{AccionInvalidaException}. La cláusula \texttt{finally} ejecutó su mensaje de manera irrefutable.
+    \item \textbf{Escenario 6 (Auditoría Transaccional):} La bitácora final conservó íntegramente las tres interacciones del torneo, confirmando la resiliencia global de la arquitectura.
+\end{enumerate}
+
+% =========================================================================
+% 7. PREGUNTAS DE REFLEXIÓN
+% =========================================================================
+\section{Preguntas de Reflexión (respuestas.docx)}
+
+\subsection{Diferencia entre Excepción Chequeada y No Chequeada}
+\textbf{Pregunta:} \textit{¿Cuál es la diferencia entre una excepción chequeada y una no chequeada? ¿Por qué \texttt{PersonajeNuloException} extiende \texttt{RuntimeException} y no \texttt{Exception}?}
+
+\vspace{0.2cm}
+\noindent \textbf{Respuesta:}
+La diferencia radica en el momento y la obligatoriedad de su verificación:
+\begin{itemize}
+    \item \textbf{Excepciones Chequeadas (Checked):} Son aquellas que heredan directamente de \texttt{java.lang.Exception}. El compilador de Java impone la regla sintáctica de que deben ser atrapadas mediante un bloque \texttt{try-catch} o propagadas explícitamente con la cláusula \texttt{throws} en la firma del método. Representan contingencias razonables del dominio o del entorno que un software profesional debe anticipar y recuperar (como la falta de recursos o que un enemigo ya esté derrotado).
+    \item \textbf{Excepciones No Chequeadas (Unchecked):} Son aquellas que heredan de \texttt{java.lang.RuntimeException}. El compilador no exige su captura ni su declaración contractual. Representan vicios de lógica, negligencias o defectos directos del programador (tales como índices fuera de límites o desreferenciación de punteros nulos).
+\end{itemize}
+
+\textbf{Justificación de diseño:} \texttt{PersonajeNuloException} extiende \texttt{RuntimeException} porque recibir un parámetro \texttt{null} en \texttt{ejecutarTurno()} o en \texttt{curarAliado()} es una falla de codificación atribuible a quien invoca la función, no una contingencia operativa regular del juego. Forzar al programador a declarar firmas con \texttt{throws PersonajeNuloException} ensuciaría la arquitectura con cláusulas innecesarias para errores que deben evitarse con validaciones previas de sanidad.
+
+\subsection{Utilidad Indispensable del Bloque finally}
+\textbf{Pregunta:} \textit{¿Para qué sirve el bloque \texttt{finally}? Da un ejemplo real de cuándo es indispensable.}
+
+\vspace{0.2cm}
+\noindent \textbf{Respuesta:}
+El bloque \texttt{finally} define una sección de código cuya ejecución está formalmente garantizada por la Máquina Virtual de Java, independientemente de si el bloque \texttt{try} concluyó con éxito, si se capturó un fallo en un bloque \texttt{catch}, o si sobrevino una excepción imprevista no capturada.
+
+\textbf{Ejemplo real de la industria:} La administración de recursos nativos del Sistema Operativo, tales como conexiones a bases de datos relacionales (\texttt{java.sql.Connection}), canales de red (\texttt{java.net.Socket}) o flujos de archivos (\texttt{FileInputStream}). Si ocurre un fallo en mitad de una lectura de archivo o consulta SQL, el descriptor del archivo o la conexión al servidor quedarían abiertos indefinidamente en la memoria del kernel del sistema operativo, provocando una fuga crítica de recursos (\textit{resource leak}). Colocar la llamada a \texttt{close()} en el bloque \texttt{finally} asegura que el descriptor se libere bajo cualquier circunstancia.
+
+\subsection{Diferencia entre throw y throws}
+\textbf{Pregunta:} \textit{¿Cuál es la diferencia entre \texttt{throw} y \texttt{throws}? Muestra un ejemplo de cada uno tomado de este laboratorio.}
+
+\vspace{0.2cm}
+\noindent \textbf{Respuesta:}
+\begin{enumerate}
+    \item \textbf{\texttt{throws} (con terminación en `s'):} Es una palabra reservada utilizada en la \textbf{firma o cabecera} de un método para declarar formalmente ante el compilador que dicho método es capaz de propagar una o más excepciones chequeadas, transfiriendo la obligación de gestionarlas al llamador.
+    \begin{itemize}
+        \item \textit{Ejemplo del laboratorio:}
+        \begin{lstlisting}[style=JavaStyle,numbers=none]
+public abstract void atacar() throws RpgException;
+public void recibirDanio(int danio) throws AccionInvalidaException;
+        \end{lstlisting}
+    \end{itemize}
+    \item \textbf{\texttt{throw} (sin `s'):} Es una sentencia imperativa \textbf{ejecutable} dentro del cuerpo de un método utilizada para instanciar y detonar activamente una excepción en tiempo de ejecución en cuanto se detecta una anomalía.
+    \begin{itemize}
+        \item \textit{Ejemplo del laboratorio:}
+        \begin{lstlisting}[style=JavaStyle,numbers=none]
+if (flechasDisponibles <= 0) {
+    throw new RecursoInsuficienteException("flechas", flechasDisponibles);
+}
+        \end{lstlisting}
+    \end{itemize}
+\end{enumerate}
+
+% =========================================================================
+% 8. CONCLUSIONES
+% =========================================================================
+\section{Conclusiones}
+
+El desarrollo del presente laboratorio permitió consolidar la transición entre un modelo puramente descriptivo de clases hacia una arquitectura de software defensiva, tolerante a fallos y mantenible:
+
+\begin{enumerate}
+    \item \textbf{Inviolabilidad del Estado Interno:} La incorporación de validaciones estrictas y lanzamiento de excepciones elimina la posibilidad de que los personajes operen en estados inconsistentes (daño negativo, vida subcero o inventarios en valores negativos).
+    \item \textbf{Desacoplamiento Estructural:} Se logró una clara separación de responsabilidades: los métodos de los personajes detectan y lanzan la anomalía con \texttt{throw}, mientras que el componente orquestador (\texttt{MotorCombate}) captura y mitiga el error con \texttt{catch}, permitiendo que el bucle principal continúe su flujo.
+    \item \textbf{Semántica Expresiva de Dominio:} El diseño de la clase raíz \texttt{RpgException} y sus especializaciones otorga una riqueza diagnóstica superior a los genéricos mensajes por consola o excepciones estándar no contextualizadas.
+    \item \textbf{Garantía Transaccional con \texttt{finally}:} Se comprobó experimentalmente la eficacia de \texttt{finally} para asentar el registro histórico de turnos con total certeza de ejecución.
+    \item \textbf{Madurez de la Ingeniería de Software:} La combinación armónica de Clases Abstractas, Interfaces, Polimorfismo Dinámico y Excepciones sienta las bases para arquitecturas empresariales complejas.
+\end{enumerate}
+
+\vspace{1.5cm}
+\begin{center}
+    \rule{8cm}{0.4pt}\\[0.2cm]
+    \textbf{Santiago Elias Chaparro}\\
+    \small Matrícula: 2225342 | Alumno Titular\\
+    Licenciatura en Ciencias Computacionales\\
+    Facultad de Ciencias Físico Matemáticas\\
+    Universidad Autónoma de Nuevo León
+\end{center}
+
+\end{document}

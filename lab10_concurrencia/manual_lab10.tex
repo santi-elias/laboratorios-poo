@@ -1,0 +1,1082 @@
+\documentclass[11pt,letterpaper]{article}
+
+% --- PAQUETES FUNDAMENTALES ---
+\usepackage[utf8]{inputenc}
+\usepackage[spanish,es-tabla]{babel}
+\usepackage[margin=2.2cm,headheight=14pt]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{microtype}
+
+% --- COLORES CORPORATIVOS Y EDITORIALES ---
+\definecolor{NavyUANL}{RGB}{14, 43, 92}
+\definecolor{GoldFCFM}{RGB}{180, 130, 20}
+\definecolor{JavaBlue}{RGB}{0, 70, 140}
+\definecolor{JavaGreen}{RGB}{20, 110, 40}
+\definecolor{JavaPurple}{RGB}{110, 20, 120}
+\definecolor{JavaGray}{RGB}{100, 100, 100}
+\definecolor{CodeBg}{RGB}{250, 250, 252}
+\definecolor{TerminalBg}{RGB}{245, 245, 248}
+\definecolor{BorderGray}{RGB}{210, 215, 225}
+
+% --- CONFIGURACIÓN DE HIPERVÍNCULOS ---
+\hypersetup{
+    colorlinks=true,
+    linkcolor=NavyUANL,
+    citecolor=NavyUANL,
+    urlcolor=JavaBlue,
+    pdfauthor={Santiago Elias Chaparro},
+    pdftitle={Manual de Practica - Laboratorio 10: Programacion Concurrente en Java},
+    pdfsubject={Programacion Orientada a Objetos - UANL FCFM},
+    pdfkeywords={Java, Concurrencia, Threads, Runnable, Synchronized, Race Condition, FCFM, LCC}
+}
+
+% --- ESTILOS DE LISTINGS (CÓDIGO FUENTE) ---
+\lstdefinestyle{JavaStyle}{
+    language=Java,
+    backgroundcolor=\color{CodeBg},
+    basicstyle=\ttfamily\footnotesize,
+    keywordstyle=\color{JavaPurple}\bfseries,
+    commentstyle=\color{JavaGreen}\itshape,
+    stringstyle=\color{NavyUANL},
+    numberstyle=\tiny\color{JavaGray},
+    numbers=left,
+    numbersep=8pt,
+    stepnumber=1,
+    tabsize=4,
+    showspaces=false,
+    showstringspaces=false,
+    breaklines=true,
+    breakatwhitespace=true,
+    frame=single,
+    rulecolor=\color{BorderGray},
+    xleftmargin=12pt,
+    framexleftmargin=8pt,
+    captionpos=b
+}
+
+\lstdefinestyle{TerminalStyle}{
+    backgroundcolor=\color{TerminalBg},
+    basicstyle=\ttfamily\scriptsize,
+    breaklines=true,
+    breakatwhitespace=true,
+    frame=single,
+    rulecolor=\color{BorderGray},
+    showspaces=false,
+    showstringspaces=false,
+    numbers=none,
+    xleftmargin=8pt,
+    framexleftmargin=8pt
+}
+
+% --- CONFIGURACIÓN DE ENCABEZADOS Y PIES DE PÁGINA ---
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textsc{Programación Orientada a Objetos} --- \textbf{Lab 10}}
+\fancyhead[R]{\small\textit{Programación Concurrente en Java}}
+\fancyfoot[L]{\small Santiago Elias Chaparro (2225342)}
+\fancyfoot[R]{\small Página \thepage\ de \pageref{LastPage}}
+\renewcommand{\headrulewidth}{0.5pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+\begin{document}
+
+% =========================================================================
+% PORTADA INSTITUCIONAL
+% =========================================================================
+\begin{titlepage}
+    \centering
+    \vspace*{0.5cm}
+    
+    {\Huge \textbf{UNIVERSIDAD AUTÓNOMA DE NUEVO LEÓN}}\\[0.4cm]
+    {\LARGE \textbf{FACULTAD DE CIENCIAS FÍSICO MATEMÁTICAS}}\\[2.5cm]
+    
+    {\large \textsc{Unidad de Aprendizaje:}}\\[0.2cm]
+    {\Large \textbf{PROGRAMACIÓN ORIENTADA A OBJETOS}}\\[0.3cm]
+    {\large \textit{Catedrático: Mtro. Jorge Alberto Pineda Islas}}\\[2.0cm]
+    
+    \rule{\linewidth}{0.6mm}\\[0.4cm]
+    {\huge \textbf{MANUAL DE PRÁCTICA DE LABORATORIO}}\\[0.3cm]
+    {\Large \textbf{Laboratorio 10: Programación Concurrente en Java}}\\[0.2cm]
+    {\large \textit{Ejecución Paralela Multihilo, Exclusión Mutua con Monitores y Sincronización en un Torneo RPG}}\\[0.3cm]
+    \rule{\linewidth}{0.6mm}\\[2.2cm]
+    
+    \begin{minipage}{0.85\textwidth}
+        \begin{tabular}{ll}
+            \textbf{Estudiante:} & Santiago Elias Chaparro \\
+            \textbf{Matrícula:} & 2225342 \\
+            \textbf{Carrera:} & Licenciatura en Ciencias Computacionales \\
+            \textbf{Semestre:} & Tercer Semestre (Agosto -- Diciembre 2026) \\
+            \textbf{Fecha de Entrega:} & Noviembre 14 del 2026 \\
+        \end{tabular}
+    \end{minipage}
+    
+    \vfill
+    {\small San Nicolás de los Garza, Nuevo León, México}
+    \vspace*{0.5cm}
+\end{titlepage}
+
+% =========================================================================
+% ÍNDICE GENERAL
+% =========================================================================
+\tableofcontents
+\newpage
+
+% =========================================================================
+% 1. OBJETIVO DE LA PRÁCTICA
+% =========================================================================
+\section{Objetivo de la Práctica}
+
+El propósito primordial de esta práctica de laboratorio es transformar el motor de videojuego de rol (RPG) secuencial desarrollado en las unidades previas en un \textbf{sistema concurrente multihilo}, capaz de ejecutar múltiples combates en paralelo de forma asíncrona y segura. De manera específica, el estudiante desarrollará las siguientes competencias técnicas e ingenieriles:
+
+\begin{itemize}[leftmargin=1.5cm]
+    \item \textbf{Creación y Gestión de Hilos de Ejecución:} Dominar los dos mecanismos fundamentales proporcionados por la plataforma Java para la creación de hilos: la especialización mediante la clase base \texttt{Thread} y la abstracción orientada a tareas mediante la interfaz funcional \texttt{Runnable}.
+    \item \textbf{Control del Ciclo de Vida del Hilo:} Comprender los estados internos de un hilo dentro de la Máquina Virtual de Java (JVM) (\texttt{NEW}, \texttt{RUNNABLE}, \texttt{TIMED\_WAITING}, \texttt{BLOCKED}, \texttt{TERMINATED}) y emplear métodos de temporización como \texttt{Thread.sleep()} e interrupción segura.
+    \item \textbf{Exclusión Mutua y Sincronización (\textit{Thread Safety}):} Utilizar la palabra reservada \texttt{synchronized} para establecer cerrojos intrínsecos (\textit{monitor locks}) sobre secciones críticas, impidiendo que múltiples hilos corrompan estructuras de datos compartidas.
+    \item \textbf{Diagnóstico y Demostración de Condiciones de Carrera (\textit{Race Conditions}):} Analizar experimentalmente el fenómeno de interferencia entre hilos a nivel de hardware/bytecode (ciclo de instrucción \textit{Read-Modify-Write}), comprobando la pérdida de actualizaciones (\textit{lost updates}) y su erradicación formal mediante sincronización.
+    \item \textbf{Barreras de Coordinación y Espera con \texttt{join()}:} Emplear el método de sincronización \texttt{join()} para bloquear el hilo orquestador principal hasta que todos los procesos paralelos hayan concluido, garantizando la consistencia en el cálculo y la presentación de resultados.
+\end{itemize}
+
+% =========================================================================
+% 2. INTRODUCCIÓN Y ANTECEDENTES
+% =========================================================================
+\section{Introducción y Antecedentes}
+
+A lo largo de los Laboratorios 04 al 07, el motor del videojuego RPG se ejecutó de forma estrictamente \textbf{secuencial y síncrona}. Todas las instrucciones corrían sobre el hilo principal (\textit{main thread}):
+
+\begin{lstlisting}[style=JavaStyle,numbers=none]
+// Enfoque Secuencial (Laboratorios 04 a 07):
+motor.ejecutarTurno(sylva, malachar);   // Bloquea hasta finalizar por completo
+motor.ejecutarTurno(legolas, thorin);   // Inicia hasta que termine el combate anterior
+motor.ejecutarTurno(brego, kael);       // Se ejecuta al final en cola
+\end{lstlisting}
+
+Aunque este modelo simplificó el control y la captura de excepciones, adolece de un límite estructural severo: \textbf{la incapacidad de simular simultaneidad}. En un entorno real de videojuegos multijugador, simulación de batallas o sistemas empresariales con alta concurrencia, múltiples eventos ocurren en campos de batalla independientes al mismo tiempo.
+
+Si cada combate toma varios segundos (por ejemplo, pausas de cálculo o animación simuladas con \texttt{Thread.sleep(500)}), un torneo de tres campos secuenciales demoraría la suma acumulada de todos ellos, mientras que un procesador multicore contemporáneo permanece desaprovechado.
+
+La concurrencia en Java permite descomponer cada combate en una unidad autónoma de procesamiento concurrente. No obstante, la concurrencia introduce nuevos desafíos de ingeniería de software:
+\begin{enumerate}
+    \item \textbf{No determinismo en la planificación:} La CPU y el planificador del sistema operativo (\textit{Thread Scheduler}) intercalan la ejecución de los hilos de manera arbitraria.
+    \item \textbf{Condición de Carrera (\textit{Race Condition}):} Si varios hilos acceden y modifican el mismo recurso en memoria (como una lista de resultados o un contador de bajas) sin sincronización, las operaciones atómicas del lenguaje se desarticulan y generan estados inconsistentes.
+\end{enumerate}
+
+El presente laboratorio aborda estos retos mediante el diseño de una infraestructura concurrente profesional para el \textit{Gran Torneo del Gremio}.
+
+% =========================================================================
+% 3. FUNDAMENTOS TEÓRICOS DE CONCURRENCIA EN JAVA
+% =========================================================================
+\section{Fundamentos Teóricos de Concurrencia en Java}
+
+\subsection{Procesos vs. Hilos en la JVM}
+En los sistemas operativos modernos, un \textbf{proceso} es una instancia de un programa en ejecución con su propio espacio de memoria virtual aislado. Por el contrario, un \textbf{hilo (\textit{Thread})} es la unidad básica de despacho y ejecución de la CPU dentro de un mismo proceso. Todos los hilos creados dentro de la JVM comparten:
+\begin{itemize}
+    \item La memoria de montón (\textit{Heap Memory}), donde residen los objetos instanciados.
+    \item El área de métodos (\textit{Method Area}) y las variables de clase estáticas.
+\end{itemize}
+Sin embargo, cada hilo dispone de su propia \textbf{pila de ejecución privada (\textit{Thread Stack})}, donde almacena los marcos de invocación de métodos, parámetros y variables locales primitivas.
+
+\subsection{Mecanismos de Creación de Hilos: Thread vs. Runnable}
+La plataforma Java ofrece dos alternativas estándar para definir hilos de ejecución, resumidas en la Tabla~\ref{tab:thread_vs_runnable}:
+
+\begin{table}[h!]
+    \centering
+    \caption{Comparativa Arquitectónica entre \texttt{extends Thread} e \texttt{implements Runnable}}
+    \label{tab:thread_vs_runnable}
+    \vspace{0.2cm}
+    \small
+    \begin{tabularx}{\textwidth}{p{3.2cm}X X}
+        \toprule
+        \textbf{Criterio} & \textbf{\texttt{extends Thread}} & \textbf{\texttt{implements Runnable}} \\
+        \midrule
+        \textbf{Naturaleza técnica} & Herencia directa de clase concreta \texttt{java.lang.Thread}. & Implementación de interfaz funcional (\texttt{@FunctionalInterface}). \\
+        \textbf{Restricción de Herencia} & Bloquea la jerarquía: Java \textit{no admite herencia múltiple de clases}. Si se extiende \texttt{Thread}, no se puede heredar de \texttt{Personaje}. & Total libertad: La clase puede extender cualquier entidad de dominio y además implementar \texttt{Runnable}. \\
+        \textbf{Principio SRP} & Viola el Principio de Responsabilidad Única al mezclar la tarea de negocio con el ciclo de vida del hilo. & Cumple SRP: Separa \textit{la tarea a ejecutar} (\texttt{run()}) de \textit{la infraestructura de ejecución} (\texttt{Thread}). \\
+        \textbf{Escalabilidad} & Cada hilo es un objeto pesado e indivisible; incompatible con reciclaje de hilos. & Diseñado para \textit{Thread Pools} y \texttt{ExecutorService}; el mismo \texttt{Runnable} puede asignarse a cualquier trabajador. \\
+        \textbf{Caso en el Torneo} & Utilizado en \texttt{MonitorTorneo} como servicio autónomo de supervisión continua. & Utilizado en \texttt{CombateConcurrente} para encapsular el enfrentamiento entre dos luchadores. \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+\subsection{Ciclo de Vida de un Hilo en la JVM}
+Un hilo en Java transita a través de una máquina de estados determinista gestionada por la JVM:
+\begin{enumerate}
+    \item \textbf{\texttt{NEW}:} El objeto \texttt{Thread} ha sido instanciado (\texttt{new Thread(runnable)}), pero su método \texttt{start()} aún no ha sido invocado.
+    \item \textbf{\texttt{RUNNABLE}:} El hilo está listo para ejecutarse o ya está corriendo en la CPU bajo la custodia del despachador del SO.
+    \item \textbf{\texttt{TIMED\_WAITING}:} El hilo se encuentra suspendido voluntariamente por un lapso específico mediante llamadas como \texttt{Thread.sleep(millis)} o \texttt{join(millis)}.
+    \item \textbf{\texttt{BLOCKED}:} El hilo está suspendido en espera de adquirir un monitor intrínseco (\texttt{synchronized}) ocupado por otro hilo.
+    \item \textbf{\texttt{WAITING}:} El hilo espera indefinidamente a que otro hilo efectúe una acción particular (ej. \texttt{join()} sin tiempo límite o \texttt{wait()}).
+    \item \textbf{\texttt{TERMINATED}:} El método \texttt{run()} ha finalizado su ejecución (de manera natural o por una excepción no controlada).
+\end{enumerate}
+
+\subsection{Exclusión Mutua con Monitores Intrínsecos (\texttt{synchronized})}
+Cuando múltiples hilos operan sobre una referencia común en el Heap, se produce una \textbf{sección crítica}. Para garantizar consistencia, Java provee el mecanismo de cerrojo de monitor (\textit{Intrinsic Lock}):
+\begin{itemize}
+    \item Toda instancia de objeto en Java tiene asociado un cerrojo (\textit{monitor}).
+    \item Al marcar un método como \texttt{synchronized}, un hilo debe adquirir el monitor del objeto receptor (\texttt{this}) antes de ingresar al cuerpo del método.
+    \item Cualquier otro hilo que intente ejecutar un bloque o método \texttt{synchronized} sobre el mismo objeto pasará de inmediato al estado \texttt{BLOCKED} hasta que el primer hilo libere el monitor.
+\end{itemize}
+
+\subsection{Anatomía de una Condición de Carrera (\textit{Race Condition})}
+Una condición de carrera sobreviene cuando el resultado final de un cómputo depende de la secuencia o temporización impredecible con la que los hilos son planificados por el procesador.
+
+El caso prototípico se ilustra con la instrucción aparentemente elemental:
+\begin{lstlisting}[style=JavaStyle,numbers=none]
+contador++; // Operacion NO atomica en Java
+\end{lstlisting}
+
+A nivel del bytecode de la JVM y de la arquitectura de la CPU, dicha instrucción se divide en tres fases secuenciales independientes (\textit{Read-Modify-Write}):
+\begin{enumerate}
+    \item \textbf{READ (Lectura):} El hilo lee el valor actual de la variable \texttt{contador} desde la memoria principal (RAM) hacia un registro interno de la CPU.
+    \item \textbf{MODIFY (Modificación):} La ALU suma una unidad al registro local.
+    \item \textbf{WRITE (Escritura):} El hilo descarga el nuevo valor desde el registro de regreso a la variable en memoria.
+\end{enumerate}
+
+\begin{figure}[h!]
+\centering
+\begin{lstlisting}[style=TerminalStyle]
+Hilo A (Core 1)                     Hilo B (Core 2)                 Memoria Principal
+--------------------------------------------------------------------------------------
+[1] Lee contador (valor = 100)                                      contador = 100
+                                    [2] Lee contador (valor = 100)  contador = 100
+[3] Modifica registro: 100 + 1 = 101
+                                    [4] Modifica registro: 100 + 1 = 101
+[5] Escribe registro 101 en memoria                                 contador = 101
+                                    [6] Escribe registro 101        contador = 101 (¡LOST UPDATE!)
+\end{lstlisting}
+\caption{Diagrama temporal del conflicto Read-Modify-Write originando pérdida de actualizaciones.}
+\label{fig:race_condition}
+\end{figure}
+
+Como demuestra la Figura~\ref{fig:race_condition}, aunque ambos hilos ejecutaron un incremento, el valor final en memoria aumentó únicamente en una unidad. Al acumularse miles de iteraciones entre cinco hilos paralelos, el resultado real queda significativamente por debajo del valor teórico esperado (por ejemplo, 4632 en lugar de 5000).
+
+\subsection{El Método \texttt{join()} y Barreras de Sincronización}
+La invocación \texttt{t.join()} suspende la ejecución del hilo invocador (\texttt{main}) hasta que el hilo objetivo \texttt{t} alcance el estado \texttt{TERMINATED}. Actúa como una barrera de sincronización indispensable antes de consolidar métricas, reportar tablas finales o liberar recursos.
+
+% =========================================================================
+% 4. ARQUITECTURA DEL SISTEMA CONCURRENTE RPG
+% =========================================================================
+\section{Arquitectura y Jerarquía del Sistema Concurrente}
+
+El diseño del torneo distribuye las responsabilidades en cuatro módulos bien diferenciados:
+
+\begin{lstlisting}[style=TerminalStyle]
+Arquitectura del Sistema Concurrente (Torneo del Gremio):
++--------------------------------------------------------------------------+
+| Hilo Principal (Main)                                                    |
+|  - Coordina el arranque y espera sincronizada mediante join()            |
++--------------------------------------------------------------------------+
+         |                                           |
+         v                                           v
++-------------------------------+           +------------------------------+
+| CombateConcurrente (Runnable) | x3        | MonitorTorneo (Thread)       |
+|  - Campo-1, Campo-2, Campo-3  |           |  - Vigilancia en segundo     |
+|  - Rondas con sleep(500)      |           |    plano (sleep(1000))       |
+|  - Captura RpgException       |           +------------------------------+
++-------------------------------+
+         |
+         v (invoca registrar())
++--------------------------------------------------------------------------+
+| TablaResultados [Thread-Safe]                                            |
+|  - Metodo: synchronized void registrar(String)                           |
+|  - Protege la lista interna contra escrituras simultaneas                |
++--------------------------------------------------------------------------+
+         |
++--------------------------------------------------------------------------+
+| ContadorCompartido [Banco de Pruebas de Carrera]                         |
+|  - Metodo inseguro: void incrementar()           -> Produce Race Condition|
+|  - Metodo seguro:   synchronized void incrementarSeguro() -> Atomicidad  |
++--------------------------------------------------------------------------+
+\end{lstlisting}
+
+\subsection{Entidades y Participantes del Torneo}
+En el torneo participan combatientes polimórficos de distintas disciplinas, instanciados en parejas para los tres campos simultáneos:
+\begin{itemize}
+    \item \textbf{Campo-1:} Druida (\textit{Sylva}, nivel 10) vs. Nigromante (\textit{Malachar}, nivel 8).
+    \item \textbf{Campo-2:} Arquero (\textit{Legolas}, nivel 6) vs. Guerrero (\textit{Thorin}, nivel 9).
+    \item \textbf{Campo-3:} Druida (\textit{Brego}, nivel 7) vs. Nigromante (\textit{Kael}, nivel 5).
+\end{itemize}
+
+% =========================================================================
+% 5. CÓDIGO FUENTE COMPLETO DEL SISTEMA
+% =========================================================================
+\section{Código Fuente del Sistema}
+
+A continuación se transcribe la totalidad del código fuente de los 14 componentes organizados en sus respectivos módulos de software.
+
+\subsection{Módulo de Concurrencia y Sincronización}
+
+\subsubsection{\texttt{CombateConcurrente.java}}
+Implementa la interfaz \texttt{Runnable}. Modela la simulación del combate en un campo independiente, capturando excepciones de dominio y gestionando retardos temporizados.
+\begin{lstlisting}[style=JavaStyle]
+public class CombateConcurrente implements Runnable {
+
+    private String           nombre;
+    private Personaje        atacante;
+    private Personaje        defensor;
+    private TablaResultados  resultados;
+
+    public CombateConcurrente(String nombre,
+                               Personaje atacante,
+                               Personaje defensor,
+                               TablaResultados resultados) {
+        this.nombre     = nombre;
+        this.atacante   = atacante;
+        this.defensor   = defensor;
+        this.resultados = resultados;
+    }
+
+    @Override
+    public void run() {
+        System.out.println("[" + nombre + "] INICIO — " +
+                           atacante.getNombre() + " vs " +
+                           defensor.getNombre());
+
+        int ronda = 1;
+
+        while (atacante.isEstaVivo() && defensor.isEstaVivo()) {
+
+            System.out.println("[" + nombre + "] Ronda " + ronda);
+
+            try {
+                // Simula que el combate tarda un tiempo
+                Thread.sleep(500);
+
+                atacante.atacar();
+                int danio = atacante.calcularDanio();
+                defensor.recibirDanio(danio);
+
+            } catch (RpgException e) {
+                System.out.println("[" + nombre + "] [!] " + e.getMessage());
+                break;
+
+            } catch (InterruptedException e) {
+                System.out.println("[" + nombre + "] Combate interrumpido.");
+                Thread.currentThread().interrupt();
+                break;
+            }
+
+            ronda++;
+        }
+
+        // Determinar ganador y registrar en la tabla compartida
+        String ganador = atacante.isEstaVivo()
+                       ? atacante.getNombre()
+                       : defensor.getNombre();
+
+        String registro = nombre + " → Ganador: " + ganador +
+                          " (rondas: " + ronda + ")";
+
+        resultados.registrar(registro);
+
+        System.out.println("[" + nombre + "] FIN — " + ganador + " gana.");
+    }
+}
+\end{lstlisting}
+
+\subsubsection{\texttt{MonitorTorneo.java}}
+Especializa directamente la clase \texttt{Thread} para actuar como un proceso supervisor autónomo que emite mensajes de estado a intervalos regulares.
+\begin{lstlisting}[style=JavaStyle]
+public class MonitorTorneo extends Thread {
+
+    private String nombreCampo;
+    private int    duracionSegundos;
+
+    public MonitorTorneo(String nombreCampo, int duracionSegundos) {
+        this.nombreCampo       = nombreCampo;
+        this.duracionSegundos  = duracionSegundos;
+    }
+
+    @Override
+    public void run() {
+        System.out.println("[Monitor] Vigilando campo: " + nombreCampo);
+
+        for (int i = 1; i <= duracionSegundos; i++) {
+            try {
+                Thread.sleep(1000);   // espera 1 segundo
+                System.out.println("[Monitor] " + nombreCampo +
+                                   " — segundo " + i +
+                                   " de " + duracionSegundos);
+            } catch (InterruptedException e) {
+                System.out.println("[Monitor] Monitor interrumpido.");
+                Thread.currentThread().interrupt();
+                return;
+            }
+        }
+
+        System.out.println("[Monitor] " + nombreCampo + " finalizado.");
+    }
+}
+\end{lstlisting}
+
+\subsubsection{\texttt{TablaResultados.java}}
+Estructura de datos compartida entre los hilos de combate. Implementa el método sincronizado \texttt{registrar()} para garantizar \textit{thread safety} al mutar la lista interna.
+\begin{lstlisting}[style=JavaStyle]
+import java.util.ArrayList;
+
+public class TablaResultados {
+
+    private ArrayList<String> registros = new ArrayList<>();
+
+    // synchronized garantiza que solo un hilo a la vez modifica la lista
+    public synchronized void registrar(String resultado) {
+        registros.add(resultado);
+        System.out.println("[Tabla] Registrado: " + resultado);
+    }
+
+    public void mostrarResultados() {
+        System.out.println("\n=== Resultados del Torneo ===");
+        for (int i = 0; i < registros.size(); i++) {
+            System.out.println((i + 1) + ". " + registros.get(i));
+        }
+        System.out.println("Total de combates: " + registros.size());
+    }
+}
+\end{lstlisting}
+
+\subsubsection{\texttt{ContadorCompartido.java}}
+Componente de laboratorio diseñado para contrastar la divergencia entre operaciones concurrentes no sincronizadas vs. operaciones protegidas con monitor.
+\begin{lstlisting}[style=JavaStyle]
+public class ContadorCompartido {
+
+    private int contador = 0;
+
+    // SIN synchronized — puede dar resultados incorrectos
+    public void incrementar() {
+        contador++;
+    }
+
+    // CON synchronized — seguro entre hilos
+    public synchronized void incrementarSeguro() {
+        contador++;
+    }
+
+    public int getContador() {
+        return contador;
+    }
+
+    public void resetear() {
+        contador = 0;
+    }
+}
+\end{lstlisting}
+
+\subsection{Módulo de Dominio y Polimorfismo RPG}
+
+\subsubsection{\texttt{Personaje.java}}
+Clase abstracta base. Provee el contrato de combate y salvaguardas de integridad de salud.
+\begin{lstlisting}[style=JavaStyle]
+public abstract class Personaje {
+
+    protected String nombre;
+    protected int nivel;
+    protected int puntosVida;
+    protected boolean estaVivo;
+
+    public Personaje(String nombre, int nivel, int puntosVida) {
+        this.nombre = nombre;
+        this.nivel = nivel;
+        this.puntosVida = puntosVida;
+        this.estaVivo = true;
+    }
+
+    public String getNombre()    { return nombre; }
+    public int getNivel()        { return nivel; }
+    public int getPuntosVida()   { return puntosVida; }
+    public boolean isEstaVivo()  { return estaVivo; }
+
+    public void recibirDanio(int danio) throws AccionInvalidaException {
+        if (danio < 0) {
+            throw new AccionInvalidaException(
+                "recibirDanio",
+                "El daño no puede ser negativo: " + danio
+            );
+        }
+        puntosVida -= danio;
+        if (puntosVida <= 0) {
+            puntosVida = 0;
+            estaVivo = false;
+        }
+        System.out.println(nombre + " recibe " + danio +
+                           " de daño. Vida: " + puntosVida);
+        if (!estaVivo) {
+            System.out.println(nombre + " ha sido derrotado.");
+        }
+    }
+
+    public abstract void atacar() throws RpgException;
+    public abstract int calcularDanio();
+
+    @Override
+    public String toString() {
+        String vivo = estaVivo ? "Sí" : "No";
+        return "Nombre: " + nombre + " | Nivel: " + nivel +
+               " | Vida: " + puntosVida + " | Vivo: " + vivo;
+    }
+}
+\end{lstlisting}
+
+\subsubsection{\texttt{Guerrero.java}}
+\begin{lstlisting}[style=JavaStyle]
+public class Guerrero extends Personaje {
+
+    private String arma;
+    private int fuerza;
+
+    public Guerrero(String nombre, int nivel, int puntosVida, String arma, int fuerza) {
+        super(nombre, nivel, puntosVida);
+        this.arma = arma;
+        this.fuerza = fuerza;
+    }
+
+    @Override
+    public void atacar() throws RpgException {
+        if (!isEstaVivo()) {
+            throw new PersonajeDerrotadoException(getNombre());
+        }
+        System.out.println("[" + getNombre() + "] golpea ferozmente con su " + arma + ".");
+    }
+
+    @Override
+    public int calcularDanio() {
+        return (fuerza * nivel) / 2;
+    }
+
+    public String getArma() { return arma; }
+    public int getFuerza() { return fuerza; }
+
+    @Override
+    public String toString() {
+        return super.toString() + " | Arma: " + arma + " | Fuerza: " + fuerza;
+    }
+}
+\end{lstlisting}
+
+\subsubsection{\texttt{Arquero.java}}
+\begin{lstlisting}[style=JavaStyle]
+public class Arquero extends Personaje {
+
+    private String tipoArco;
+    private int flechasDisponibles;
+    private int precision;
+
+    public Arquero(String nombre, int nivel, int puntosVida,
+                   String tipoArco, int flechasDisponibles, int precision) {
+        super(nombre, nivel, puntosVida);
+        this.tipoArco = tipoArco;
+        this.flechasDisponibles = flechasDisponibles;
+        this.precision = precision;
+    }
+
+    @Override
+    public void atacar() throws RpgException {
+        if (!isEstaVivo()) {
+            throw new PersonajeDerrotadoException(getNombre());
+        }
+
+        if (flechasDisponibles <= 0) {
+            throw new RecursoInsuficienteException("flechas", flechasDisponibles);
+        }
+
+        flechasDisponibles--;
+        System.out.println("[" + getNombre() + "] dispara una flecha. " +
+                           "Flechas restantes: " + flechasDisponibles);
+    }
+
+    @Override
+    public int calcularDanio() {
+        return (precision * nivel) / 8;
+    }
+
+    public String getTipoArco() { return tipoArco; }
+    public int getFlechasDisponibles() { return flechasDisponibles; }
+    public int getPrecision() { return precision; }
+
+    @Override
+    public String toString() {
+        return super.toString() + " | Arco: " + tipoArco +
+               " | Flechas: " + flechasDisponibles + " | Precisión: " + precision + "%";
+    }
+}
+\end{lstlisting}
+
+\subsubsection{\texttt{Druida.java}}
+\begin{lstlisting}[style=JavaStyle]
+public class Druida extends Personaje implements Hechicero, Sanador {
+
+    private int mana;
+    private int poderCuracion;
+    private String formaAnimal;
+
+    public Druida(String nombre, int nivel, int puntosVida, int mana) {
+        this(nombre, nivel, puntosVida, mana, 50, "Oso");
+    }
+
+    public Druida(String nombre, int nivel, int puntosVida,
+                  int mana, int poderCuracion, String formaAnimal) {
+        super(nombre, nivel, puntosVida);
+        this.mana = mana;
+        this.poderCuracion = poderCuracion;
+        this.formaAnimal = formaAnimal;
+    }
+
+    @Override
+    public void atacar() throws RpgException {
+        if (!isEstaVivo()) {
+            throw new PersonajeDerrotadoException(getNombre());
+        }
+
+        if (mana < 10) {
+            throw new RecursoInsuficienteException("mana", mana);
+        }
+
+        mana -= 10;
+        System.out.println("[" + nombre + "] invoca raíces del bosque y ataca con furia natural.");
+    }
+
+    @Override
+    public int calcularDanio() {
+        int danioBase = nivel * 20;
+        int bonusMana = mana / 2;
+        int bonusForma = "Oso".equalsIgnoreCase(formaAnimal) ? 40 : 20;
+        return danioBase + bonusMana + bonusForma;
+    }
+
+    @Override
+    public void lanzarHechizo() {
+        System.out.println(nombre + " lanza: ¡Tormenta de espinas! (maná: " + mana + ")");
+    }
+
+    @Override
+    public int getMana() { return mana; }
+
+    @Override
+    public void curarAliado(Personaje aliado) throws RpgException {
+        if (aliado == null) {
+            throw new PersonajeNuloException("curarAliado");
+        }
+        if (!aliado.isEstaVivo()) {
+            throw new AccionInvalidaException("curarAliado", "No se puede curar a un personaje derrotado");
+        }
+        aliado.puntosVida += poderCuracion;
+        System.out.println(nombre + " cura a " + aliado.getNombre() +
+                           " por " + poderCuracion + " puntos de vida.");
+    }
+
+    @Override
+    public int getPoderCuracion() { return poderCuracion; }
+}
+\end{lstlisting}
+
+\subsubsection{\texttt{Nigromante.java}}
+\begin{lstlisting}[style=JavaStyle]
+public class Nigromante extends Personaje implements Hechicero {
+
+    private int mana;
+    private int almasAbsorbidas;
+
+    public Nigromante(String nombre, int nivel, int puntosVida, int mana) {
+        this(nombre, nivel, puntosVida, mana, 5);
+    }
+
+    public Nigromante(String nombre, int nivel, int puntosVida,
+                      int mana, int almasAbsorbidas) {
+        super(nombre, nivel, puntosVida);
+        this.mana = mana;
+        this.almasAbsorbidas = almasAbsorbidas;
+    }
+
+    @Override
+    public void atacar() throws RpgException {
+        if (!isEstaVivo()) {
+            throw new PersonajeDerrotadoException(getNombre());
+        }
+
+        if (mana < 15) {
+            throw new RecursoInsuficienteException("mana", mana);
+        }
+
+        mana -= 15;
+        System.out.println("[" + nombre + "] drena la esencia vital e invoca sombras.");
+    }
+
+    @Override
+    public int calcularDanio() {
+        int danioBase = nivel * 25;
+        int bonusMana = mana / 2;
+        int bonusAlmas = almasAbsorbidas * 15;
+        return danioBase + bonusMana + bonusAlmas;
+    }
+
+    @Override
+    public void lanzarHechizo() {
+        System.out.println(nombre + " lanza: ¡Maldición de decadencia! (maná: " + mana + ")");
+    }
+
+    @Override
+    public int getMana() { return mana; }
+    public int getAlmasAbsorbidas() { return almasAbsorbidas; }
+
+    @Override
+    public String toString() {
+        return super.toString() + " | Maná: " + mana + " | Almas: " + almasAbsorbidas;
+    }
+}
+\end{lstlisting}
+
+\subsubsection{\texttt{Hechicero.java} y \texttt{Sanador.java}}
+\begin{lstlisting}[style=JavaStyle]
+public interface Hechicero {
+    void lanzarHechizo();
+    int getMana();
+}
+\end{lstlisting}
+
+\begin{lstlisting}[style=JavaStyle]
+public interface Sanador {
+    void curarAliado(Personaje aliado) throws RpgException;
+    int getPoderCuracion();
+}
+\end{lstlisting}
+
+\subsection{Módulo de Excepciones del Dominio}
+
+\subsubsection{\texttt{RpgException.java}}
+\begin{lstlisting}[style=JavaStyle]
+public class RpgException extends Exception {
+
+    public RpgException(String mensaje) {
+        super(mensaje);
+    }
+
+    public RpgException(String mensaje, Throwable causa) {
+        super(mensaje, causa);
+    }
+}
+\end{lstlisting}
+
+\subsubsection{\texttt{PersonajeDerrotadoException.java} y \texttt{RecursoInsuficienteException.java}}
+\begin{lstlisting}[style=JavaStyle]
+public class PersonajeDerrotadoException extends RpgException {
+
+    private String nombrePersonaje;
+
+    public PersonajeDerrotadoException(String nombrePersonaje) {
+        super("El personaje '" + nombrePersonaje +
+              "' está derrotado y no puede realizar esta acción.");
+        this.nombrePersonaje = nombrePersonaje;
+    }
+
+    public String getNombrePersonaje() { return nombrePersonaje; }
+}
+\end{lstlisting}
+
+\begin{lstlisting}[style=JavaStyle]
+public class RecursoInsuficienteException extends RpgException {
+
+    private String recurso;
+    private int cantidadActual;
+
+    public RecursoInsuficienteException(String recurso, int cantidadActual) {
+        super("Recurso insuficiente: " + recurso + " (actual: " + cantidadActual + ")");
+        this.recurso = recurso;
+        this.cantidadActual = cantidadActual;
+    }
+
+    public String getRecurso() { return recurso; }
+    public int getCantidadActual() { return cantidadActual; }
+}
+\end{lstlisting}
+
+\subsubsection{\texttt{AccionInvalidaException.java} y \texttt{PersonajeNuloException.java}}
+\begin{lstlisting}[style=JavaStyle]
+public class AccionInvalidaException extends RpgException {
+
+    private String accion;
+
+    public AccionInvalidaException(String accion, String razon) {
+        super("Acción inválida [" + accion + "]: " + razon);
+        this.accion = accion;
+    }
+
+    public String getAccion() { return accion; }
+}
+\end{lstlisting}
+
+\begin{lstlisting}[style=JavaStyle]
+public class PersonajeNuloException extends RuntimeException {
+
+    private String operacion;
+
+    public PersonajeNuloException(String operacion) {
+        super("Referencia nula a Personaje en la operación: " + operacion);
+        this.operacion = operacion;
+    }
+
+    public String getOperacion() { return operacion; }
+}
+\end{lstlisting}
+
+\subsection{Orquestador Principal de Hilos: \texttt{Main.java}}
+\begin{lstlisting}[style=JavaStyle]
+public class Main {
+
+    public static void main(String[] args) {
+
+        System.out.println("=== Gran Torneo del Gremio ===\n");
+
+        // Bloque 1 — Torneo con 3 combates simultáneos:
+        TablaResultados tabla = new TablaResultados();
+
+        Personaje s1 = new Druida("Sylva",    10, 300, 100);
+        Personaje m1 = new Nigromante("Malachar", 8, 150, 120);
+        Personaje l1 = new Arquero("Legolas", 6, 200, "Arco", 10, 95);
+        Personaje t1 = new Guerrero("Thorin", 9, 400, "Hacha", 80);
+        Personaje b1 = new Druida("Brego",   7, 250, 80);
+        Personaje k1 = new Nigromante("Kael", 5, 180, 90);
+
+        // Crear los Runnable
+        CombateConcurrente c1 = new CombateConcurrente("Campo-1", s1, m1, tabla);
+        CombateConcurrente c2 = new CombateConcurrente("Campo-2", l1, t1, tabla);
+        CombateConcurrente c3 = new CombateConcurrente("Campo-3", b1, k1, tabla);
+
+        // Envolver en Thread e iniciar
+        Thread h1 = new Thread(c1);
+        Thread h2 = new Thread(c2);
+        Thread h3 = new Thread(c3);
+
+        h1.start();
+        h2.start();
+        h3.start();
+
+        // Bloque 2 — Monitor del torneo (hilo independiente):
+        MonitorTorneo monitor = new MonitorTorneo("Torneo Principal", 3);
+        monitor.start();
+
+        // Bloque 3 — Esperar a que todos terminen con join():
+        try {
+            h1.join();   // espera a que Campo-1 termine
+            h2.join();   // espera a que Campo-2 termine
+            h3.join();   // espera a que Campo-3 termine
+            monitor.join();
+        } catch (InterruptedException e) {
+            System.out.println("Espera interrumpida.");
+        }
+
+        System.out.println("\nTodos los combates han terminado.");
+        tabla.mostrarResultados();
+
+        // Bloque 4 — Demostración de race condition:
+        System.out.println("\n--- Demostración de Race Condition ---");
+        ContadorCompartido contador = new ContadorCompartido();
+
+        // Sin synchronized — resultado incorrecto
+        Thread[] hilos = new Thread[5];
+        for (int i = 0; i < 5; i++) {
+            hilos[i] = new Thread(() -> {
+                for (int j = 0; j < 1000; j++) contador.incrementar();
+            });
+            hilos[i].start();
+        }
+        for (Thread t : hilos) {
+            try {
+                t.join();
+            } catch (InterruptedException e) {
+                System.out.println("Espera de hilo interrumpida.");
+            }
+        }
+        System.out.println("Sin sync  — esperado: 5000 | real: " +
+                           contador.getContador());
+
+        // Con synchronized — resultado correcto
+        contador.resetear();
+        for (int i = 0; i < 5; i++) {
+            hilos[i] = new Thread(() -> {
+                for (int j = 0; j < 1000; j++) contador.incrementarSeguro();
+            });
+            hilos[i].start();
+        }
+        for (Thread t : hilos) {
+            try {
+                t.join();
+            } catch (InterruptedException e) {
+                System.out.println("Espera de hilo interrumpida.");
+            }
+        }
+        System.out.println("Con sync  — esperado: 5000 | real: " +
+                           contador.getContador());
+    }
+}
+\end{lstlisting}
+
+% =========================================================================
+% 6. OUTPUTS DE LA EJECUCIÓN
+% =========================================================================
+\section{Outputs de la Ejecución y Análisis Experimental}
+
+La ejecución del programa compilado genera la siguiente salida por consola, evidenciando el intercalado concurrente y la demostración de la condición de carrera:
+
+\begin{lstlisting}[style=TerminalStyle]
+=== Gran Torneo del Gremio ===
+
+[Monitor] Vigilando campo: Torneo Principal
+[Campo-3] INICIO — Brego vs Kael
+[Campo-1] INICIO — Sylva vs Malachar
+[Campo-2] INICIO — Legolas vs Thorin
+[Campo-3] Ronda 1
+[Campo-2] Ronda 1
+[Campo-1] Ronda 1
+[Brego] invoca raíces del bosque y ataca con furia natural.
+[Legolas] dispara una flecha. Flechas restantes: 9
+[Sylva] invoca raíces del bosque y ataca con furia natural.
+Thorin recibe 71 de daño. Vida: 329
+[Campo-2] Ronda 2
+Malachar recibe 285 de daño. Vida: 0
+Kael recibe 215 de daño. Vida: 0
+Malachar ha sido derrotado.
+Kael ha sido derrotado.
+[Tabla] Registrado: Campo-1 → Ganador: Sylva (rondas: 2)
+[Tabla] Registrado: Campo-3 → Ganador: Brego (rondas: 2)
+[Campo-1] FIN — Sylva gana.
+[Campo-3] FIN — Brego gana.
+[Monitor] Torneo Principal — segundo 1 de 3
+[Legolas] dispara una flecha. Flechas restantes: 8
+Thorin recibe 71 de daño. Vida: 258
+[Campo-2] Ronda 3
+[Legolas] dispara una flecha. Flechas restantes: 7
+Thorin recibe 71 de daño. Vida: 187
+[Campo-2] Ronda 4
+[Monitor] Torneo Principal — segundo 2 de 3
+[Legolas] dispara una flecha. Flechas restantes: 6
+Thorin recibe 71 de daño. Vida: 116
+[Campo-2] Ronda 5
+[Legolas] dispara una flecha. Flechas restantes: 5
+Thorin recibe 71 de daño. Vida: 45
+[Campo-2] Ronda 6
+[Monitor] Torneo Principal — segundo 3 de 3
+[Monitor] Torneo Principal finalizado.
+[Legolas] dispara una flecha. Flechas restantes: 4
+Thorin recibe 71 de daño. Vida: 0
+Thorin ha sido derrotado.
+[Tabla] Registrado: Campo-2 → Ganador: Legolas (rondas: 7)
+[Campo-2] FIN — Legolas gana.
+
+Todos los combates han terminado.
+
+=== Resultados del Torneo ===
+1. Campo-1 → Ganador: Sylva (rondas: 2)
+2. Campo-3 → Ganador: Brego (rondas: 2)
+3. Campo-2 → Ganador: Legolas (rondas: 7)
+Total de combates: 3
+
+--- Demostración de Race Condition ---
+Sin sync  — esperado: 5000 | real: 4632
+Con sync  — esperado: 5000 | real: 5000
+\end{lstlisting}
+
+\subsection{Análisis del Comportamiento Concurrente}
+\begin{enumerate}
+    \item \textbf{Intercalado Dinámico:} Se observa que \texttt{[Campo-1]}, \texttt{[Campo-2]} y \texttt{[Campo-3]} comienzan sus rondas en paralelo. Sylva y Brego definen sus combates en 2 rondas, mientras que el enfrentamiento entre Legolas y Thorin se prolonga durante 7 rondas.
+    \item \textbf{Coexistencia con el Monitor Autónomo:} El hilo \texttt{MonitorTorneo} reporta de forma no intrusiva los segundos transcurridos (1, 2 y 3) de manera intercalada con las rondas de los combates, demostrando la ejecución simultánea de hilos de propósito disímil.
+    \item \textbf{Barrera de Espera (\texttt{join}):} El hilo principal esperó de forma determinista hasta que el combate más largo (\texttt{Campo-2}) y el monitor terminaran por completo antes de invocar \texttt{mostrarResultados()}.
+    \item \textbf{Verificación Empírica de Condición de Carrera:} En la prueba de 5000 incrementos, la versión sin sincronizar obtuvo un valor de \textbf{4632} (perdiéndose 368 actualizaciones por interferencia de lectura/escritura). En contraste, la versión con \texttt{synchronized} arrojó exactamente \textbf{5000}, validando la exclusión mutua.
+\end{enumerate}
+
+% =========================================================================
+% 7. PREGUNTAS DE REFLEXIÓN
+% =========================================================================
+\section{Preguntas de Reflexión (respuestas.txt)}
+
+\subsection{Diferencia entre \texttt{extends Thread} e \texttt{implements Runnable}}
+\textbf{Pregunta:} \textit{¿Cuál es la diferencia entre \texttt{extends Thread} e \texttt{implements Runnable}? ¿Cuándo preferirías uno sobre el otro?}
+
+\vspace{0.2cm}
+\noindent \textbf{Respuesta:}
+\begin{itemize}
+    \item \textbf{\texttt{extends Thread}:} La clase hereda directamente de \texttt{java.lang.Thread} y sobreescribe su método \texttt{run()}. Dado que el lenguaje Java prohíbe la herencia múltiple de clases, heredar de \texttt{Thread} agota el único cupo de extensión disponible, imposibilitando que la clase extienda su jerarquía de dominio natural (como \texttt{Personaje}). Adicionalmente, genera un acoplamiento rígido entre el trabajo a ejecutar y la infraestructura del hilo.
+    \item \textbf{\texttt{implements Runnable}:} La clase implementa la interfaz funcional \texttt{Runnable}, comprometiéndose únicamente a codificar el método \texttt{run()}. La instancia resultante actúa como una tarea desacoplada que se transfiere al constructor de un \texttt{Thread} o a un gestor de hilos (\texttt{ExecutorService}).
+\end{itemize}
+
+\textbf{Criterio de elección preferente:}
+En el desarrollo profesional de software se prefiere casi invariablemente \textbf{\texttt{implements Runnable}} (o \texttt{Callable}) por tres razones arquitectónicas:
+\begin{enumerate}[label=\alph*)]
+    \item \textbf{Flexibilidad en el diseño de clases:} La entidad conserva su libertad para heredar de otra clase base del negocio.
+    \item \textbf{Principio de Responsabilidad Única (SRP):} Desacopla la lógica computacional (el \textit{qué} hacer) del ciclo de vida y la calendarización del hilo (el \textit{cómo} y \textit{cuándo} ejecutarlo).
+    \item \textbf{Eficiencia y reutilización con Thread Pools:} Permite reciclar hilos obreros preexistentes para procesar múltiples tareas \texttt{Runnable}, evitando el costo prohibitivo de crear y destruir hilos a nivel del sistema operativo.
+\end{enumerate}
+Solo se justificaría emplear \texttt{extends Thread} cuando el objetivo deliberado sea especializar el comportamiento nativo de la clase \texttt{Thread} (por ejemplo, modificando rutinas de inicialización de pila, instrumentación interna o hilos de telemetría como \texttt{MonitorTorneo}).
+
+\subsection{Condición de Carrera y Fallo en \texttt{ContadorCompartido}}
+\textbf{Pregunta:} \textit{¿Qué es una \textit{race condition} (condición de carrera)? Explica con el ejemplo del \texttt{ContadorCompartido} por qué el resultado sin \texttt{synchronized} puede ser menor a 5000.}
+
+\vspace{0.2cm}
+\noindent \textbf{Respuesta:}
+Una condición de carrera ocurre en sistemas concurrentes cuando dos o más hilos acceden y modifican un estado compartido simultáneamente sin la adecuada sincronización, provocando que la consistencia del resultado final dependa del orden arbitrario e incontrolable en que los hilos son planificados por la CPU.
+
+\textbf{Explicación a bajo nivel en \texttt{ContadorCompartido}:}
+La expresión sintáctica \texttt{contador++} no es indivisible a nivel de hardware ni de bytecode. Se descompone en tres fases:
+\begin{enumerate}
+    \item \textbf{Lectura (READ):} Cargar el valor presente en memoria hacia el registro local del procesador.
+    \item \textbf{Modificación (MODIFY):} Incrementar en 1 el contenido del registro.
+    \item \textbf{Escritura (WRITE):} Almacenar el valor modificado de regreso en la dirección de memoria.
+\end{enumerate}
+
+Cuando 5 hilos ejecutan 1000 iteraciones en paralelo, se suscita la siguiente intercalación anómala:
+\begin{itemize}
+    \item El Hilo 1 lee el contador en 100.
+    \item Antes de que el Hilo 1 complete la escritura, ocurre un cambio de contexto (\textit{context switch}); el procesador cede el turno al Hilo 2.
+    \item El Hilo 2 lee el contador (que sigue en 100), calcula 101 y lo escribe en la memoria principal (\texttt{contador = 101}).
+    \item El procesador retoma al Hilo 1; este ya poseía 100 en su registro, le suma 1 (obteniendo 101) y sobrescribe la memoria con 101.
+\end{itemize}
+A pesar de haberse ejecutado dos incrementos en la lógica del programa, el valor acumulado en memoria avanzó solo en una unidad, produciendo una \textbf{actualización perdida (\textit{lost update})}. Al repetirse cientos de veces, el total registrado resulta sustancialmente inferior a 5000 (obteniéndose empíricamente 4632).
+
+Al incorporar la cláusula \textbf{\texttt{synchronized}}, se adquiere el monitor intrínseco del objeto, forzando a que las tres fases operen con estricta atomicidad y asegurando que ningún otro hilo acceda a la sección crítica hasta que la escritura haya concluido, garantizando un conteo perfecto de 5000.
+
+\subsection{Función Indispensable de \texttt{join()}}
+\textbf{Pregunta:} \textit{¿Para qué sirve \texttt{join()}? ¿Qué pasaría si quitaras los \texttt{join()} del bloque 3 antes de llamar a \texttt{tabla.mostrarResultados()}?}
+
+\vspace{0.2cm}
+\noindent \textbf{Respuesta:}
+El método \texttt{join()} de la clase \texttt{Thread} bloquea la ejecución del hilo llamador (en este caso, el hilo principal \texttt{main}) y lo coloca en un estado de espera (\texttt{WAITING}) hasta que el hilo receptor haya concluido totalmente su método \texttt{run()} y alcanzado el estado terminal (\texttt{TERMINATED}).
+
+\textbf{Consecuencias críticas de omitir \texttt{join()} en el Bloque 3:}
+Dado que los hilos de los combates (\texttt{h1}, \texttt{h2}, \texttt{h3}) y del monitor operan de manera asíncrona con pausas de \texttt{Thread.sleep()}, si se suprimieran las llamadas a \texttt{join()}, el hilo principal continuaría inmediatamente su flujo en cuestión de microsegundos:
+\begin{enumerate}
+    \item Imprimiría prematuramente el mensaje \textit{``Todos los combates han terminado''} cuando los combates apenas estarían comenzando su primera ronda.
+    \item Al invocar \texttt{tabla.mostrarResultados()}, el reporte indicaría \textit{``Total de combates: 0''} y una lista completamente vacía, puesto que ningún combate habría llegado aún a la línea \texttt{resultados.registrar()}.
+    \item Las salidas del combate se intercalarían caóticamente con los cálculos de la prueba de condición de carrera del Bloque 4, corrompiendo la legibilidad y la secuencia del programa.
+\end{enumerate}
+Por tanto, \texttt{join()} constituye la barrera de sincronización indispensable para garantizar la integridad temporal entre el procesamiento distribuido y la agregación de resultados.
+
+% =========================================================================
+% 8. CONCLUSIONES Y FIRMA
+% =========================================================================
+\section{Conclusiones y Firma Académica}
+
+La realización de este laboratorio representa un salto cualitativo fundamental en la formación computacional, transitando del paradigma secuencial a la programación concurrente y distribuida:
+
+\begin{enumerate}[leftmargin=1.5cm]
+    \item \textbf{Aprovechamiento del Hardware Moderno:} La descomposición en tareas \texttt{Runnable} permite que la JVM aproveche arquitecturas multi-núcleo reales, ejecutando múltiples campos de batalla en paralelo con un incremento exponencial en la eficiencia temporal.
+    \item \textbf{Comprensión Profunda de la Concurrencia:} Se constató empíricamente que la concurrencia no supervisada corrompe el estado de las aplicaciones debido a operaciones no atómicas a nivel de CPU (\textit{Race Conditions}).
+    \item \textbf{Seguridad de Hilos (\textit{Thread Safety}):} El dominio de la exclusión mutua mediante \texttt{synchronized} y el uso de barreras de espera con \texttt{join()} facultan al estudiante para construir sistemas empresariales resilientes, tolerantes y libres de condiciones de carrera.
+\end{enumerate}
+
+\vspace{1.5cm}
+\begin{center}
+    \rule{8cm}{0.4pt}\\[0.2cm]
+    \textbf{Santiago Elias Chaparro}\\
+    \small Matrícula: 2225342 | Alumno Titular\\
+    Licenciatura en Ciencias Computacionales\\
+    Facultad de Ciencias Físico Matemáticas\\
+    Universidad Autónoma de Nuevo León
+\end{center}
+
+\end{document}

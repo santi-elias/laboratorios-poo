@@ -1,0 +1,58 @@
+================================================================================
+LABORATORIO 10 — PROGRAMACIÓN CONCURRENTE EN JAVA
+PREGUNTAS DE REFLEXIÓN
+================================================================================
+
+1. ¿Cuál es la diferencia entre extends Thread e implements Runnable? ¿Cuándo preferirías uno sobre el otro?
+--------------------------------------------------------------------------------
+Respuesta:
+- "extends Thread": La clase hereda directamente de java.lang.Thread y sobreescribe su método run(). Debido a que Java no admite herencia múltiple de clases, si una clase extiende Thread, queda imposibilitada de heredar de cualquier otra clase base (como Personaje). Además, acopla fuertemente la tarea a realizar con el mecanismo de ejecución del hilo.
+- "implements Runnable": La clase implementa una interfaz funcional (Runnable) definiendo únicamente el método run(), que contiene la tarea o trabajo a ejecutar. Luego, una instancia de esta clase se pasa como argumento al constructor de un objeto Thread (o a un ExecutorService/ThreadPool).
+
+¿Cuándo preferir uno sobre el otro?
+En la práctica profesional casi siempre se prefiere "implements Runnable" (o Callable en concurrencia avanzada) porque:
+a) Permite que la clase conserve su jerarquía de herencia natural (por ejemplo, CombateConcurrente podría extender otra clase si fuera necesario, o nuestros personajes que ya extienden Personaje).
+b) Aplica el principio de diseño de Responsabilidad Única (SRP): separa la lógica de la tarea (el qué hacer) de la gestión del ciclo de vida del hilo (el cómo y cuándo ejecutarlo).
+c) Facilita la reutilización de código y la integración con pools de hilos (ExecutorService), donde los hilos se reciclan para ejecutar múltiples tareas Runnable sin crearlos y destruirlos continuamente.
+
+Solo se preferiría "extends Thread" en casos muy específicos donde realmente se necesite especializar o modificar el comportamiento interno del propio hilo (como sobreescribir métodos propios de Thread o construir un tipo de hilo de infraestructura como MonitorTorneo con estado interno dedicado al monitoreo).
+
+
+2. ¿Qué es una race condition (condición de carrera)? Explica con el ejemplo del ContadorCompartido por qué el resultado sin synchronized puede ser menor a 5000.
+--------------------------------------------------------------------------------
+Respuesta:
+Una race condition (condición de carrera) ocurre en sistemas concurrentes cuando dos o más hilos acceden y modifican un recurso o variable compartida de manera simultánea sin la debida sincronización, de tal forma que el resultado final depende del orden impredecible de intercalado y planificación (scheduling) de las instrucciones por parte de la CPU y el sistema operativo.
+
+Explicación con ContadorCompartido:
+La operación aparentemente simple "contador++" NO es una operación atómica a nivel de hardware/bytecode, sino que consta de tres pasos independientes:
+1. Lectura (READ): El hilo lee el valor actual de 'contador' desde la memoria principal a un registro interno.
+2. Modificación (MODIFY): El hilo suma 1 al valor en el registro.
+3. Escritura (WRITE): El hilo guarda el nuevo valor resultante de regreso en la variable en memoria.
+
+Cuando múltiples hilos (en nuestro caso 5 hilos) ejecutan este ciclo miles de veces concurrentemente, se produce la siguiente interferencia:
+- Supongamos que contador vale 100.
+- El Hilo A lee 100.
+- Antes de que el Hilo A escriba, el sistema operativo interrumpe al Hilo A y cede el procesador al Hilo B.
+- El Hilo B lee contador (que sigue siendo 100), calcula 101 y lo escribe en memoria (contador = 101).
+- El procesador vuelve al Hilo A, que ya tenía en su registro el valor 100; le suma 1 (101) y escribe 101 en memoria.
+
+Como consecuencia, se realizaron dos incrementos pero el contador solo aumentó en 1, perdiéndose una actualización (lost update). Con 5 hilos y miles de repeticiones, este desfase ocurre cientos o miles de veces, dando como resultado un valor significativamente menor a 5000 (por ejemplo, 4732).
+
+Al agregar la palabra clave "synchronized", Java establece un cerrojo intrínseco (monitor lock) sobre el objeto. Solo un hilo puede entrar y ejecutar el método a la vez, garantizando atomicidad y visibilidad en memoria, lo que asegura que el resultado final sea exactamente 5000.
+
+
+3. ¿Para qué sirve join()? ¿Qué pasaría si quitaras los join() del bloque 3 antes de llamar tabla.mostrarResultados()?
+--------------------------------------------------------------------------------
+Respuesta:
+El método join() de la clase Thread hace que el hilo actual (en este caso, el hilo principal "main") suspenda su ejecución y espere a que el hilo sobre el cual se invoca join() haya completado su método run() y termine su ciclo de vida (estado TERMINATED).
+
+¿Qué pasaría si quitáramos los join() del bloque 3?
+Los hilos de los combates (h1, h2, h3) y el hilo del monitor se ejecutan en segundo plano en paralelo de forma asíncrona, demorando varios segundos debido a los retardos deliberados de Thread.sleep().
+
+Si quitamos los join(), el hilo "main" no esperará a nadie: inmediatamente después de llamar a start(), continuará ejecutando las siguientes líneas en una fracción de milisegundo. Por lo tanto:
+1. Imprimiría "Todos los combates han terminado." inmediatamente, cuando en realidad los combates apenas están iniciando sus primeras rondas en paralelo.
+2. tabla.mostrarResultados() mostraría "Total de combates: 0" y una lista vacía, porque ningún combate habría alcanzado todavía la línea donde se invoca resultados.registrar().
+3. Los mensajes de rondas de combate ("Ronda 1", "Ronda 2", etc.) y los mensajes del Monitor se imprimirían después o mezclados con la salida del Bloque 4 (la prueba del ContadorCompartido), provocando una salida caótica e incorrecta.
+
+En resumen, join() es el mecanismo fundamental de sincronización y barrera para coordinar el fin de tareas paralelas antes de consolidar y reportar los resultados finales.
+================================================================================

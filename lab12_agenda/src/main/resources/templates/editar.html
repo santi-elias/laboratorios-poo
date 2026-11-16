@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Editar Contacto - Agenda Web</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a2e;
+            color: #e0e0e0;
+            display: flex;
+            justify-content: center;
+            margin-top: 60px;
+        }
+        .caja {
+            background: #16213e;
+            padding: 40px;
+            border-radius: 12px;
+            border: 1px solid #4a90d9;
+            width: 380px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        }
+        h1 {
+            color: #f0c040;
+            text-align: center;
+            margin-bottom: 24px;
+            font-size: 1.8em;
+        }
+        label {
+            display: block;
+            margin-bottom: 6px;
+            color: #aaa;
+            font-size: .9em;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 16px;
+            background: #0f3460;
+            border: 1px solid #4a90d9;
+            border-radius: 6px;
+            color: #fff;
+            box-sizing: border-box;
+            font-size: 1em;
+        }
+        input:focus {
+            outline: none;
+            border-color: #f0c040;
+            box-shadow: 0 0 5px rgba(240, 192, 64, 0.5);
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #27ae60;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-size: 1em;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #219653;
+        }
+        a {
+            display: block;
+            text-align: center;
+            margin-top: 16px;
+            color: #4a90d9;
+            text-decoration: none;
+            font-size: 0.95em;
+        }
+        a:hover {
+            color: #f0c040;
+            text-decoration: underline;
+        }
+        .id-badge {
+            background: #0f3460;
+            border: 1px solid #4a90d9;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 0.85em;
+            color: #f0c040;
+            display: inline-block;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="caja">
+        <h1>✏️ Editar Contacto</h1>
+        <div style="text-align: center;">
+            <span class="id-badge">ID de Registro: <strong th:text="${contacto.id}">1</strong></span>
+        </div>
+        <form th:action="@{/guardar}" th:object="${contacto}" method="post">
+            <!-- Campo oculto para conservar el ID de la entidad en el UPDATE -->
+            <input type="hidden" th:field="*{id}" />
+
+            <label>Nombre</label>
+            <input type="text" th:field="*{nombre}" placeholder="Nombre" required />
+
+            <label>Apellido</label>
+            <input type="text" th:field="*{apellido}" placeholder="Apellido" required />
+
+            <label>Email</label>
+            <input type="email" th:field="*{email}" placeholder="correo@ejemplo.com" required />
+
+            <label>Teléfono</label>
+            <input type="tel" th:field="*{telefono}" placeholder="81 1234 5678" />
+
+            <button type="submit">Actualizar contacto</button>
+        </form>
+        <a href="/contactos">&larr; Cancelar y volver a la agenda</a>
+    </div>
+</body>
+</html>

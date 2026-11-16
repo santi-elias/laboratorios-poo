@@ -1,0 +1,99 @@
+================================================================================
+LABORATORIO 11 — INTRODUCCIÓN AL DESARROLLO WEB CON JAVA Y SPRING BOOT
+PREGUNTAS DE REFLEXIÓN
+Estudiante: Santiago Elias Chaparro
+Matrícula: 2225342
+Materia: Programación Orientada a Objetos — UANL FCFM
+================================================================================
+
+1. ¿Cuál es la diferencia entre una aplicación de consola (Labs 01–10) y una aplicación web? ¿Qué ventajas tiene la web?
+--------------------------------------------------------------------------------
+Respuesta:
+A lo largo de los laboratorios 01 al 10, trabajamos con aplicaciones de consola en Java. La transición hacia una aplicación web con Spring Boot en este laboratorio introduce cambios de paradigma fundamentales:
+
+a) Arquitectura y ciclo de vida de ejecución:
+   - Aplicación de consola (Labs 01–10): Es un proceso local, monousuario y efímero. Se ejecuta directamente en la Máquina Virtual de Java (JVM) instalada en la computadora del usuario. Inicia en el método estático main(), interactúa mediante la entrada estándar (stdin con Scanner o BufferedReader), imprime resultados en la salida estándar (stdout con System.out.println) y finaliza su ciclo de vida cuando el hilo principal concluye. Para que alguien más pudiera usar nuestro simulador RPG, requería tener instalada una versión compatible del JDK/JRE y los archivos compilados (.class o .jar) en su sistema operativo.
+   - Aplicación web (Lab 11 en adelante): Sigue una arquitectura distribuida Cliente-Servidor desacoplada. La aplicación Spring Boot arranca un servidor HTTP embebido (Apache Tomcat) que se mantiene en ejecución continua escuchando peticiones de red en un puerto determinado (por defecto :8080). Los usuarios (clientes) no ejecutan Java en sus máquinas; simplemente utilizan cualquier navegador web (Chrome, Firefox, Safari, Edge) para enviar solicitudes HTTP (como GET /saludo o GET /aventurero). El servidor procesa la lógica, mezcla los datos con las plantillas y devuelve una respuesta en formato HTML/CSS que el navegador interpreta y dibuja visualmente.
+
+b) Concurrencia y acceso simultáneo:
+   - En la consola, la ejecución atiende únicamente a la persona sentada frente a la terminal.
+   - En una aplicación web, el servidor gestiona internamente un pool de hilos de trabajo (Worker Threads de Tomcat). Esto permite atender a decenas, cientos o miles de usuarios simultáneamente sin bloquear la aplicación, manteniendo sesiones aisladas e independientes para cada cliente.
+
+c) Interfaz y experiencia de usuario:
+   - La consola está restringida a texto plano secuencial y caracteres alfanuméricos monocromáticos o con secuencias de escape ANSI.
+   - La web ofrece interfaces gráficas completas (GUI) estilizadas con CSS, estructuradas con HTML semántico, compatibles con imágenes, animaciones y diseño responsivo adaptable a dispositivos móviles, tablets o monitores de escritorio.
+
+Ventajas clave de la Web:
+1. Accesibilidad Universal (Zero-Install): El usuario final no necesita instalar Java, Maven, librerías externas ni configurar variables de entorno (PATH, JAVA_HOME). Solo necesita conexión a la red y un navegador web disponible en cualquier plataforma (Windows, macOS, Linux, Android, iOS).
+2. Centralización y Mantenibilidad: Cualquier modificación en la lógica del negocio, corrección de errores o actualización de diseño se realiza únicamente en el servidor. Al desplegar una nueva versión, todos los usuarios la reciben instantáneamente sin requerir que descarguen parches o reinstalen el software.
+3. Seguridad de la Lógica y los Datos: El código fuente compilado, las reglas del negocio, los secretos de configuración y las conexiones a bases de datos permanecen resguardados en el entorno controlado del servidor. El cliente únicamente recibe la representación visual en HTML resultante.
+4. Escalabilidad: Las aplicaciones web permiten escalar tanto verticalmente (más recursos al servidor) como horizontalmente (múltiples réplicas de la aplicación detrás de un balanceador de carga como Nginx o AWS ALB) para soportar alta demanda transaccional.
+
+
+2. Explica con tus palabras qué hace cada capa del MVC en este laboratorio. ¿Qué pasaría si el Controller devolviera el nombre incorrecto de la plantilla?
+--------------------------------------------------------------------------------
+Respuesta:
+El patrón MVC (Modelo – Vista – Controlador) es una arquitectura de diseño de software que separa la aplicación en tres componentes con responsabilidades bien delimitadas:
+
+1. MODEL (Modelo):
+   - Responsabilidad: Representa los datos, el estado y las reglas de negocio de la aplicación. Es la información pura sin considerar cómo será presentada visualmente.
+   - En este laboratorio:
+     * En la primera parte (/saludo), el modelo consiste en datos primitivos y cadenas de texto ("¡Hola Mundo desde Spring Boot!", "Gran Gremio de Aventureros", nivel 1) que se depositan en el objeto org.springframework.ui.Model.
+     * En la segunda parte (/aventurero), el modelo evoluciona a un objeto Java formal (POJO) mediante la clase Aventurero.java en el paquete com.gremio.model, encapsulando las propiedades nombre ("Sylva"), clase ("Druida") y nivel (10) con sus respectivos métodos de acceso (getters).
+   - El objeto Model de Spring funciona como un "contenedor de transporte" donde el controlador coloca los datos para que la vista pueda consumirlos.
+
+2. VIEW (Vista):
+   - Responsabilidad: Es la interfaz gráfica que el usuario observa e interactúa en su pantalla. Su única tarea es la presentación visual de los datos, mezclando la estructura HTML y el diseño CSS con la información proporcionada por el Modelo.
+   - En este laboratorio: Está conformada por las plantillas Thymeleaf templates/saludo.html y templates/aventurero.html. La vista no calcula lógica de negocio; utiliza expresiones dinámicas th:text="${...}" para incrustar los valores del modelo dentro de los elementos visuales de la tarjeta RPG.
+
+3. CONTROLLER (Controlador):
+   - Responsabilidad: Es el cerebro intermediario y orquestador del flujo de la aplicación. Recibe e interpreta las solicitudes HTTP enviadas por el navegador web, prepara los datos requeridos (interactuando con el Modelo o bases de datos) y selecciona la Vista adecuada que debe renderizarse.
+   - En este laboratorio: Representado por SaludoController.java anotado con @Controller.
+     * El método saludo() intercepta solicitudes GET a "/saludo", carga en el Model los textos del gremio y devuelve la cadena "saludo".
+     * El método aventurero() intercepta solicitudes GET a "/aventurero", instancia un objeto Aventurero, lo agrega al Model con la clave "aventurero" y devuelve la cadena "aventurero".
+
+¿Qué pasaría si el Controller devolviera el nombre incorrecto de la plantilla?
+Ejemplo: si en el método saludo() escribiéramos `return "saludo_inexistente";` o cometiéramos un error tipográfico como `return "saludos";`:
+
+1. Proceso interno en Spring Boot:
+   Spring Boot utiliza un componente llamado ThymeleafViewResolver. Al recibir el String devuelto por el método del controlador, el ViewResolver construye la ruta física del archivo agregando el prefijo de plantillas ("classpath:/templates/") y el sufijo estándar (".html"). Por lo tanto, intentará resolver la ruta física:
+   `classpath:/templates/saludo_inexistente.html`
+
+2. Ocurrencia del fallo:
+   Al buscar el archivo en el classpath y no encontrarlo, el motor de Thymeleaf no puede compilar la plantilla y dispara una excepción interna de tipo:
+   `org.thymeleaf.exceptions.TemplateInputException: Error resolving template [saludo_inexistente], template might not exist or might not be accessible by any of the configured Template Resolvers`
+
+3. Respuesta al cliente:
+   Debido a que el servidor no puede renderizar la vista solicitada, el servidor aborta la petición y responde con un código de error HTTP 500 (Internal Server Error) o HTTP 404 (Not Found).
+
+4. Efecto visual en el navegador:
+   El usuario no verá el diseño de fantasía RPG ni ningún dato del gremio. En su lugar, el navegador mostrará la página de error por defecto de Spring Boot:
+   "Whitelabel Error Page"
+   This application has no explicit mapping for /error, so you are seeing this as a fallback.
+   There was an unexpected error (type=Internal Server Error, status=500)...
+
+Por esta razón, la correspondencia exacta entre el String retornado por el Controller y el nombre del archivo .html en src/main/resources/templates/ es crítica para el correcto funcionamiento del ciclo de renderizado MVC.
+
+
+3. ¿Por qué crees que Thymeleaf puede mostrar el HTML sin el servidor activo? ¿Qué ventaja tiene eso para el desarrollo?
+--------------------------------------------------------------------------------
+Respuesta:
+La capacidad de Thymeleaf de abrirse y mostrarse directamente en un navegador sin que el servidor Java esté activo se debe a su diseño arquitectónico fundamentado en el concepto de "Natural Templates" (Plantillas Naturales):
+
+a) ¿Por qué es posible técnicamente?
+   - Motores de plantillas tradicionales (como JSP con `<%= mensaje %>` o `<c:out>`, o motores como Smarty, Jinja o PHP embebido) utilizan delimitadores y etiquetas sintácticas propietarias que no forman parte del estándar HTML. Si intentas abrir un archivo .jsp o .php directamente en un navegador mediante doble clic (protocolo file://), el navegador no comprende esas etiquetas extrañas, la estructura visual se rompe por completo o el navegador intenta descargar el archivo en lugar de renderizarlo.
+   - En contraste, Thymeleaf se diseñó para operar utilizando atributos estándar compatibles con HTML5 y XML, mediante un espacio de nombres dedicado (namespace): `xmlns:th="http://www.thymeleaf.org"`.
+   - Elementos como `th:text="${mensaje}"` o `th:text="${aventurero.nombre}"` son procesados por el navegador como simples atributos HTML válidos pero desconocidos para su motor de renderizado directo. De acuerdo con las especificaciones de HTML5 de la W3C, los navegadores están diseñados para ignorar silenciosamente cualquier atributo que no conozcan y continuar renderizando el contenido interno de la etiqueta.
+   - Por ello, cuando el archivo se abre directamente en el navegador sin servidor:
+     `<h1 th:text="${mensaje}">¡Hola Mundo desde Spring Boot!</h1>`
+     El navegador ignora el atributo `th:text` y dibuja en pantalla el texto estático de respaldo `"¡Hola Mundo desde Spring Boot!"`.
+   - Cuando la petición pasa a través de Spring Boot con el servidor Tomcat activo, Thymeleaf intercepta el archivo en memoria antes de enviarlo al cliente, evalúa la expresión SpEL (`${mensaje}`), reemplaza el texto interno por el valor del Modelo inyectado en el Controller y elimina el atributo `th:text`, entregando al cliente HTML5 limpio y puro.
+
+b) Ventajas competitivas para el desarrollo de software:
+   1. Prototipado colaborativo sin fricción (Separación de roles Frontend / Backend):
+      Los diseñadores gráficos y desarrolladores frontend pueden maquetar la interfaz completa, aplicar hojas de estilo CSS complejas, ajustar paletas de color y probar la responsividad de la página abriendo el archivo localmente con doble clic en su navegador favorito. No necesitan tener instalado Java, JDK, Maven, Spring Boot, ni compilar proyectos de backend, ni disponer de una base de datos activa para diseñar y validar la experiencia de usuario.
+   2. Eliminación del "Design Drift" (Sincronización única):
+      En metodologías tradicionales, el diseñador creaba un archivo `index.html` estático y luego el programador Java lo transformaba en un archivo `index.jsp` incompatible. Si el diseño cambiaba, había que trasladar manualmente los cambios de un formato a otro, generando discrepancias y errores constantes. Con Thymeleaf, el archivo .html estático de diseño ES exactamente el mismo archivo .html que se ejecuta en el servidor de producción.
+   3. Retroalimentación visual inmediata durante el desarrollo:
+      Permite al equipo verificar layouts, tipografías y estilos CSS con datos de muestra realistas de forma inmediata, agilizando enormemente los ciclos de iteración y validación antes de integrar la lógica en los controladores de Spring Boot.
+================================================================================
