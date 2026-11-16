@@ -20,6 +20,7 @@
 | [`lab11_holamundo/`](./lab11_holamundo) | **Lab 11** — Hola Mundo con Spring Boot | Spring Boot 3.3, Spring MVC, Thymeleaf, Tomcat embebido | [`Manual_Laboratorio_11_Santiago_Chaparro.pdf`](./Manual_Laboratorio_11_Santiago_Chaparro.pdf) |
 | [`lab12_agenda/`](./lab12_agenda) | **Lab 12** — Agenda de Contactos con JPA y H2 | Spring Data JPA, H2 Database, CRUD completo en memoria | [`Manual_Laboratorio_12_Santiago_Chaparro.pdf`](./Manual_Laboratorio_12_Santiago_Chaparro.pdf) |
 | [`lab13_crud/`](./lab13_crud) | **Lab 13** — CRUD Completo con Spring Boot y MySQL | Arquitectura en capas (`Service`), MySQL Database, vistas unificadas | [`Manual_Laboratorio_13_Santiago_Chaparro.pdf`](./Manual_Laboratorio_13_Santiago_Chaparro.pdf) |
+| [`practica14_crud/`](./practica14_crud) | **Práctica 14** — CRUD Completo Integrador | Nuevo proyecto basado en las prácticas previas, Capa Service, MySQL, pruebas completas | [`Manual_Practica_14_Santiago_Chaparro.pdf`](./Manual_Practica_14_Santiago_Chaparro.pdf) |
 
 ---
 

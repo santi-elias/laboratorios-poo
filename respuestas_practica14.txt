@@ -1,0 +1,79 @@
+================================================================================
+PRÁCTICA 14 — CRUD COMPLETO CON SPRING BOOT, CAPA SERVICE Y BASE DE DATOS
+PREGUNTAS DE REFLEXIÓN Y FUNDAMENTACIÓN ARQUITECTÓNICA
+Estudiante: Santiago Elias Chaparro
+Matrícula: 2225342
+Materia: Programación Orientada a Objetos — UANL FCFM
+Profesor: M.C. Jorge Alberto Pineda
+================================================================================
+
+1. ¿Por qué agregamos la capa Service? ¿Qué problema resuelve tener el Controller hablando directo con el Repository?
+--------------------------------------------------------------------------------
+Respuesta:
+La incorporación de la capa de Servicio (@Service) obedece a uno de los principios de diseño arquitectónico más importantes de la ingeniería de software: la Separación de Responsabilidades (SoC - Separation of Concerns) y el Principio de Responsabilidad Única (SRP):
+
+a) Rol específico de cada capa:
+   - Capa Controller: Su responsabilidad exclusiva es el transporte y la interacción web. Recibe las peticiones HTTP (GET, POST), deserializa parámetros de entrada, valida formatos básicos, invoca a la lógica de negocio y selecciona la vista Thymeleaf o el código de respuesta HTTP. No debe contener reglas del negocio ni interactuar directamente con la base de datos.
+   - Capa Service: Es el corazón de la aplicación donde reside toda la Lógica de Negocio (Business Logic), orquestación de procesos, transaccionalidad (@Transactional), validaciones complejas de dominio (ej. verificar si un email ya existe antes de registrarlo) y llamadas a múltiples repositorios o servicios externos.
+   - Capa Repository: Se limita a la persistencia y al acceso a datos puro (operaciones CRUD con la base de datos MySQL).
+
+b) Problemas que resuelve tener una capa Service intermedia:
+   1. Acoplamiento indebido (Tight Coupling): Si el Controller interactúa directamente con el Repository, cualquier cambio en las reglas de negocio o en la estrategia de persistencia obliga a modificar el controlador web. Al existir la capa Service, el Controller solo sabe qué método de negocio pedir (ej. `service.guardar(contacto)`), desacoplándose por completo de cómo se gestiona en la BD.
+   2. Duplicación de código (Violación DRY): Si en el futuro nuestra aplicación agrega una API REST (ej. para una app móvil en Android/iOS) o tareas programadas en segundo plano (Batch Jobs), ambos controladores (web HTML y REST API) pueden reutilizar exactamente el mismo Service sin tener que reescribir la lógica de consultas y validaciones en cada controlador.
+   3. Manejo de Transacciones (@Transactional): En operaciones que involucran múltiples escrituras a la base de datos (ej. transferencias bancarias o crear un pedido con múltiples partidas), si una falla, todas deben revertirse (Rollback). Los límites transaccionales deben declararse a nivel de servicio para garantizar la atomicidad (propiedades ACID), algo imposible de gestionar limpiamente desde un controlador.
+   4. Facilidad para Pruebas Unitarias (Mocking y Testabilidad): Al escribir pruebas unitarias sobre el Controller, se puede simular (mockear) fácilmente la interfaz del Service sin necesidad de levantar bases de datos relacionales reales, aislando fallos de manera precisa.
+
+
+2. El formulario formulario.html sirve tanto para crear como para editar. ¿Cómo sabe Thymeleaf si mostrar "Nuevo Contacto" o "Editar Contacto"? ¿Qué papel juega el campo <input type="hidden" th:field="*{id}" />?
+--------------------------------------------------------------------------------
+Respuesta:
+a) ¿Cómo sabe Thymeleaf qué título y acción mostrar?
+   - La reutilización del formulario se logra mediante el Operador Ternario condicional de Spring Expression Language (SpEL) evaluado por Thymeleaf:
+     `${contacto.id} != null ? '✏️ Editar Contacto' : '📋 Nuevo Contacto'`
+   - Funcionamiento según el endpoint invocado:
+     1. Al crear (GET /nuevo): El método `formularioNuevo()` inyecta en el modelo una nueva instancia vacía: `new Contacto()`. Como es un objeto nuevo recién instanciado, su atributo `id` es `null`. Por tanto, la expresión `${contacto.id} != null` evalúa a FALSO, haciendo que Thymeleaf renderice el título `"📋 Nuevo Contacto"` y la acción `th:action="@{/guardar}"`.
+     2. Al editar (GET /editar/{id}): El método `formularioEditar()` recupera de MySQL el contacto existente mediante `service.buscarPorId(id)` y lo deposita en el modelo. Como este contacto proviene de una fila ya guardada en la base de datos, su atributo `id` contiene un número (ej. `1L`). La expresión `${contacto.id} != null` evalúa a VERDADERO, haciendo que Thymeleaf renderice `"✏️ Editar Contacto"`, la acción `th:action="@{/actualizar}"` y precargue los valores actuales en los inputs.
+
+b) ¿Qué papel fundamental juega el campo `<input type="hidden" th:field="*{id}" />`?
+   - En el protocolo HTTP, las solicitudes POST únicamente envían los datos contenidos en los campos de entrada (`<input>`) del formulario.
+   - Si no incluyéramos el campo oculto `<input type="hidden" th:field="*{id}" />`:
+     * Al enviar el formulario de edición a `/actualizar`, el navegador solo enviaría los valores visibles: `nombre`, `apellido`, `email` y `telefono`.
+     * El objeto `Contacto` recibido en el controlador tendría su atributo `id` en `null`.
+     * Como consecuencia, Hibernate creería que se trata de un registro totalmente nuevo y ejecutaría una sentencia SQL `INSERT INTO contacto ...`, duplicando el registro en lugar de actualizar el existente.
+   - Al incluir `<input type="hidden" th:field="*{id}" />`:
+     * El valor de la clave primaria (ID) viaja de manera invisible pero segura dentro del cuerpo de la petición POST.
+     * Spring MVC enlaza dicho ID con el objeto `Contacto`.
+     * Cuando el Service ejecuta `repo.save(contacto)`, Hibernate detecta que el objeto ya cuenta con un ID existente en la base de datos y genera la instrucción SQL correcta: `UPDATE contacto SET nombre=?, apellido=?, email=?, telefono=? WHERE id=?`.
+
+
+3. repo.save(contacto) hace INSERT cuando el contacto es nuevo y UPDATE cuando ya existe. ¿Cómo sabe JPA la diferencia? Explicar la clase servicio, @PostMapping y @GetMapping.
+--------------------------------------------------------------------------------
+Respuesta:
+a) ¿Cómo distingue JPA / Hibernate entre un INSERT y un UPDATE con save()?
+   - En la implementación interna de Spring Data JPA (`SimpleJpaRepository`), el método `save(entity)` delega en el `EntityManager` de Hibernate utilizando el método `isNew(entity)` de la estrategia `EntityInformation`:
+     1. Para entidades cuya clave primaria está marcada con `@Id @GeneratedValue(strategy = GenerationType.IDENTITY)`:
+        * JPA examina el valor del atributo de clave primaria (`id`).
+        * Si `entity.getId() == null`: La entidad se considera NUEVA (Transient o Transitoria). En consecuencia, Hibernate invoca `entityManager.persist(entity)`, lo que se traduce en una sentencia SQL `INSERT INTO contacto (nombre, apellido, email, telefono) VALUES (?, ?, ?, ?)`. La base de datos MySQL genera la clave autoincremental y Hibernate actualiza el campo ID del objeto en memoria con dicho valor generado.
+        * Si `entity.getId() != null`: La entidad se considera EXISTENTE (Detached o Desconectada). Hibernate invoca `entityManager.merge(entity)`, lo que se traduce primero en una comprobación en caché/consulta y luego en una sentencia SQL `UPDATE contacto SET nombre=?, apellido=?, email=?, telefono=? WHERE id=?`.
+   - Este comportamiento inteligente se conoce como operación "Upsert" (Update or Insert) y simplifica drásticamente el código de persistencia.
+
+b) Explicación de la clase Servicio (ContactoService):
+   - Está anotada con `@Service`, lo que le indica al contenedor de Inversión de Control (IoC) de Spring que es un componente de servicio (Spring Bean).
+   - Utiliza Inyección de Dependencias por Constructor para recibir la instancia gestionada de `ContactoRepository`.
+   - Sus métodos actúan como fachada transaccional y protectora de datos:
+     * `listarTodos()`: encapsula `repo.findAll()`.
+     * `guardar(Contacto)`: encapsula `repo.save(contacto)` tanto para altas como modificaciones.
+     * `buscarPorId(Long id)`: invoca `repo.findById(id)` y maneja de forma elegante la ausencia de datos mediante `.orElseThrow(() -> new RuntimeException("Contacto no encontrado: " + id))`, evitando retornos nulos (`NullPointerException`).
+     * `eliminar(Long id)`: encapsula `repo.deleteById(id)`.
+
+c) Explicación de @GetMapping y @PostMapping:
+   - Ambas anotaciones mapean solicitudes HTTP entrantes a métodos específicos en el controlador:
+     * `@GetMapping`: Se utiliza para peticiones HTTP de tipo GET (operaciones de solo lectura e idempotentes). Los parámetros viajan expuestos en la URL (Query String o `@PathVariable`). En nuestro proyecto se usa para:
+       - Consultar y listar la agenda (`GET /contactos`).
+       - Solicitar la plantilla del formulario vacío (`GET /nuevo`).
+       - Solicitar el formulario cargado con los datos de un contacto por su ID (`GET /editar/{id}`).
+       - Solicitar la eliminación de un contacto por su ID (`GET /eliminar/{id}`).
+     * `@PostMapping`: Se utiliza para peticiones HTTP de tipo POST (operaciones que modifican el estado de la base de datos). Los datos viajan empaquetados dentro del cuerpo de la petición (payload HTTP Request Body), brindando integridad y permitiendo transportar objetos completos enlazados mediante `@ModelAttribute`. En nuestro proyecto se usa para:
+       - Procesar la creación de un nuevo contacto (`POST /guardar`).
+       - Procesar la actualización de un contacto existente (`POST /actualizar`).
+================================================================================

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agenda de Contactos — Práctica 14</title>
+    <style>
+        :root {
+            --primary: #1A365D;
+            --primary-light: #2B6CB0;
+            --success: #2F855A;
+            --danger: #C53030;
+            --bg-color: #F7FAFC;
+            --card-bg: #FFFFFF;
+            --text-dark: #2D3748;
+            --text-muted: #718096;
+            --border: #E2E8F0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            margin: 0;
+            padding: 30px 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .header h1 {
+            margin: 0;
+            color: var(--primary);
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header p {
+            margin: 5px 0 0 0;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 18px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 14px;
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-light);
+            color: #FFFFFF;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-warning {
+            background-color: #ED8936;
+            color: #FFFFFF;
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+
+        .btn-warning:hover {
+            background-color: #DD6B20;
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: #FFFFFF;
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+
+        .btn-danger:hover {
+            background-color: #9B2C2C;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 10px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.06), 0 2px 4px -1px rgba(0,0,0,0.04);
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            background-color: #EDF2F7;
+            color: var(--primary);
+            padding: 14px 18px;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        td {
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+            vertical-align: middle;
+        }
+
+        tr:hover {
+            background-color: #F8FAFC;
+        }
+
+        .action-cell {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-start;
+        }
+
+        .badge-id {
+            background-color: #E2E8F0;
+            color: var(--text-dark);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        .empty-state {
+            padding: 50px 20px;
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        .empty-state svg {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 15px;
+            stroke: var(--text-muted);
+        }
+
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <div>
+            <h1>📇 Agenda de Contactos</h1>
+            <p>Práctica 14 — CRUD Completo con Spring Boot, Capa Service y MySQL</p>
+        </div>
+        <a th:href="@{/nuevo}" class="btn btn-primary">
+            ➕ Nuevo Contacto
+        </a>
+    </div>
+
+    <div class="card">
+        <table th:if="${!contactos.empty}">
+            <thead>
+                <tr>
+                    <th style="width: 80px;">ID</th>
+                    <th>Nombre</th>
+                    <th>Apellido</th>
+                    <th>Email</th>
+                    <th>Teléfono</th>
+                    <th style="width: 180px;">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="c : ${contactos}">
+                    <td><span class="badge-id" th:text="${c.id}">1</span></td>
+                    <td style="font-weight: 600;" th:text="${c.nombre}">Juan</td>
+                    <td th:text="${c.apellido}">Pérez</td>
+                    <td>
+                        <a th:href="'mailto:' + ${c.email}" th:text="${c.email}" style="color: var(--primary-light); text-decoration: none;">juan@ejemplo.com</a>
+                    </td>
+                    <td th:text="${c.telefono}">8112345678</td>
+                    <td>
+                        <div class="action-cell">
+                            <a th:href="@{/editar/{id}(id=${c.id})}" class="btn btn-warning">
+                                ✏️ Editar
+                            </a>
+                            <a th:href="@{/eliminar/{id}(id=${c.id})}" 
+                               class="btn btn-danger"
+                               onclick="return confirm('¿Estás seguro de que deseas eliminar este contacto?');">
+                                🗑️ Eliminar
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div th:if="${contactos.empty}" class="empty-state">
+            <p style="font-size: 16px; font-weight: 500; margin-bottom: 10px;">No hay contactos registrados aún en la base de datos.</p>
+            <p style="font-size: 14px; margin-bottom: 20px;">Comienza agregando tu primer contacto con el botón superior.</p>
+            <a th:href="@{/nuevo}" class="btn btn-primary">➕ Registrar Contacto</a>
+        </div>
+    </div>
+
+    <div class="footer">
+        Desarrollado para el Laboratorio de POO — FCFM UANL • Santiago Elias Chaparro (Matrícula: 2225342)
+    </div>
+</div>
+
+</body>
+</html>
